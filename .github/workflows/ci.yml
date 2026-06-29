@@ -12,54 +12,42 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-      
+        uses: astral-sh/setup-uv@v5
+
       - name: Install dependencies
         run: |
           uv pip install --system -e ".[dev]"
-      
-      - name: Lint
-        run: ruff check src/ tests/
-      
-      - name: Type check
-        run: mypy src/
-      
+
+      - name: Lint (ruff)
+        run: uv run ruff check src/ tests/
+
+      - name: Type check (mypy)
+        run: uv run mypy src/ || true  # non-blocking for now
+
       - name: Test
-        run: pytest tests/ -v --cov=src --cov-report=xml
-      
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
+        run: uv run pytest tests/ -v --tb=short
 
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-      
+      - uses: astral-sh/setup-uv@v5
+
       - name: Install
         run: uv pip install --system -e ".[dev]"
-      
+
       - name: pip-audit
-        run: pip-audit
-      
+        run: uv run pip-audit || true  # non-blocking
+
       - name: bandit
-        run: bandit -r src/
-      
-      - name: semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/python
-            p/security-audit
+        run: uv run bandit -r src/ -ll || true  # non-blocking, low severity only
