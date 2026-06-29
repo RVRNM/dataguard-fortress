@@ -52,7 +52,7 @@ AI Agent → DataGuard Proxy (localhost:8080) → LLM Provider
 
 ```bash
 # 1. Install
-git clone https://github.com/USERNAME/dataguard-fortress.git
+git clone https://github.com/RVRNM/dataguard-fortress.git
 cd dataguard-fortress
 pip install -e ".[prod]"
 
