@@ -648,7 +648,7 @@ class TestBenchmark:
         text = (
             "User profile: email=john@example.com, phone=555-123-4567. "
             "SSN: 123-45-6789. Card: 4111-1111-1111-1111. "
-            "API key: sk-abcdefghijklmnopqrstuvwxyz123456. "
+            "API key: FAKE_KEY "
             "IP: 192.168.1.100. Contact: admin@company.com. "
         ) * 10
 
@@ -664,8 +664,8 @@ class TestBenchmark:
         text = (
             "User profile: email=john@example.com, phone=555-123-4567. "
             "SSN: 123-45-6789. Card: 4111-1111-1111-1111. "
-            "API key: sk-abcdefghijklmnopqrstuvwxyz123456. "
-            "AWS: AKIAIOSFODNN7EXAMPLE. Contact: admin@company.com. "
+            "API key: FAKE_KEY "
+            "AWS: FAKE_AWS_KEY Contact: admin@company.com. "
         ) * 100
 
         async def run():
@@ -680,9 +680,9 @@ class TestBenchmark:
         text = (
             "User profile: email=john@example.com, phone=555-123-4567. "
             "SSN: 123-45-6789. Card: 4111-1111-1111-1111. "
-            "API key: sk-abcdefghijklmnopqrstuvwxyz123456. "
-            "AWS: AKIAIOSFODNN7EXAMPLE. Contact: admin@company.com. "
-            "GitHub: ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef01. "
+            "API key: FAKE_KEY "
+            "AWS: FAKE_AWS_KEY Contact: admin@company.com. "
+            "GitHub: FAKE_GITHUB_TOKEN "
         ) * 1000
 
         async def run():

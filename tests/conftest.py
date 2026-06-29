@@ -65,8 +65,8 @@ def sample_pii_text() -> str:
     return (
         "Contact: alice@example.com, phone: 555-123-4567. "
         "SSN: 123-45-6789. Card: 4111-1111-1111-1111. "
-        "API key: sk-abcdefghijklmnopqrstuvwxyz123456. "
-        "AWS key: AKIAIOSFODNN7EXAMPLE."
+        "API key: FAKE_KEY "
+        "AWS key: FAKE_AWS_KEY"
     )
 
 

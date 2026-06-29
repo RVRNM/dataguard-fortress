@@ -1,0 +1,20 @@
+{
+  "name": "dataguard-fortress-skill",
+  "version": "1.0.0",
+  "description": "Install DataGuard Fortress skill for any AI coding agent (Claude Code, Codex, Cursor, Aider, Cline, Continue, OpenCode, Hermes)",
+  "type": "module",
+  "bin": {
+    "dataguard-skill": "./install.js"
+  },
+  "files": [
+    "install.js",
+    "SKILL.md"
+  ],
+  "keywords": ["dataguard", "privacy", "proxy", "pii", "ai-agent", "skill", "claude", "codex", "cursor"],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RVRNM/dataguard-fortress.git"
+  },
+  "author": "DataGuard Contributors"
+}

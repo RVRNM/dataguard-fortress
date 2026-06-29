@@ -90,15 +90,15 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_scrub_openai_key(self, scrubber: PIIScrubber) -> None:
         """OpenAI API keys are detected and redacted."""
-        text = "Here is my key: sk-abcdefghijklmnopqrstuvwxyz123456"
+        text = "Here is my key: TEST_OPENAI_KEY_abcdefghijklmnopqrstuvwxyz1234567890"
         result = await scrubber.scrub(text)
         assert "[REDACTED_OPENAI_KEY]" in result.scrubbed_text
-        assert "sk-abc" not in result.scrubbed_text
+        assert "TEST_OPENAI_KEY_" not in result.scrubbed_text
 
     @pytest.mark.asyncio
     async def test_scrub_aws_key(self, scrubber: PIIScrubber) -> None:
         """AWS access keys are detected and redacted."""
-        text = "AWS key: AKIAIOSFODNN7EXAMPLE is compromised."
+        text = "AWS key: FAKE_AWS_KEY is compromised."
         result = await scrubber.scrub(text)
         assert "[REDACTED_AWS_KEY]" in result.scrubbed_text
 
@@ -154,7 +154,7 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_stripe_key_detection(self, scrubber: PIIScrubber) -> None:
         """Stripe keys are detected."""
-        text = "Key: sk_live_REDACTED"
+        text = "Key: FAKE_STRIPE_KEY"
         result = await scrubber.scrub(text)
         assert "[REDACTED_STRIPE_KEY]" in result.scrubbed_text
 
