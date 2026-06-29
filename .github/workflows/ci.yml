@@ -32,7 +32,7 @@ jobs:
           uv pip install --python .venv -e ".[dev]"
 
       - name: Lint (ruff, non-blocking)
-        run: uv run --python .venv ruff check src/ tests/ --ignore E501
+        run: uv run --python .venv ruff check src/ tests/ || true
 
       - name: Type check (mypy, non-blocking)
         run: uv run --python .venv mypy src/ || true
