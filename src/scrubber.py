@@ -15,8 +15,8 @@ All patterns are pre-compiled at module load time for performance.
 
 from __future__ import annotations
 
-import re
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 

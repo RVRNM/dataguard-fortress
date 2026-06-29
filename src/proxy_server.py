@@ -13,19 +13,21 @@ Features:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import signal
 import ssl
 import time
 import uuid
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Optional
+from typing import Any
 from urllib.parse import urlparse
 
-from src.config import Config, ProxyServerConfig
-from src.scrubber import PIIScrubber
 from src.audit import AuditEvent, AuditEventType, AuditLogger
+from src.config import Config, ProxyServerConfig
 from src.orchestrator import DataGuardOrchestrator, OrchestratorDecision
+from src.scrubber import PIIScrubber
 
 logger = logging.getLogger(__name__)
 
@@ -350,7 +352,7 @@ class AsyncProxyServer:
                         ctx.error = f"unparseable_request: {first_line_str[:100]}"
                         logger.warning("Cannot parse request: %s", first_line_str[:100])
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 ctx.error = "read_timeout"
                 logger.warning("[%s] Read timeout", ctx.request_id)
             except ConnectionResetError:
@@ -405,7 +407,7 @@ class AsyncProxyServer:
                 asyncio.open_connection(host, port),
                 timeout=self._proxy_config.connect_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             writer.write(b"HTTP/1.1 504 Gateway Timeout\r\n\r\n")
             await writer.drain()
             ctx.error = "upstream_timeout"
@@ -425,10 +427,8 @@ class AsyncProxyServer:
 
         # Clean up upstream
         upstream_writer.close()
-        try:
+        with contextlib.suppress(Exception):
             await upstream_writer.wait_closed()
-        except Exception:
-            pass
 
     async def _relay_tunnel(
         self,
@@ -475,10 +475,8 @@ class AsyncProxyServer:
         # Cancel the other direction
         for task in pending:
             task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await task
-            except asyncio.CancelledError:
-                pass
 
     async def _handle_http_request(
         self,
@@ -586,7 +584,7 @@ class AsyncProxyServer:
                 self._pool.get(upstream_host, upstream_port, use_tls),
                 timeout=self._proxy_config.connect_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             writer.write(b"HTTP/1.1 504 Gateway Timeout\r\n\r\n")
             await writer.drain()
             ctx.error = "upstream_timeout"
@@ -640,16 +638,14 @@ class AsyncProxyServer:
                 writer.write(response_data)
 
             await writer.drain()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             ctx.error = "response_timeout"
         except (ConnectionResetError, BrokenPipeError):
             ctx.error = "upstream_connection_lost"
 
         # Return connection to pool
-        try:
+        with contextlib.suppress(Exception):
             await self._pool.put(upstream_host, upstream_port, use_tls, upstream_reader, upstream_writer)
-        except Exception:
-            pass
 
         # Record audit event via orchestrator if available
         if self._orchestrator and orchestrator_decision:

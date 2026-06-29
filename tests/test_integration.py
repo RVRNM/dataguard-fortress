@@ -6,30 +6,29 @@ import asyncio
 import json
 import socket
 import time
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
 
+from src.audit import AuditLogger
 from src.config import (
     AuditConfig,
     Config,
     ProxyServerConfig,
     RateLimiterConfig,
     ScrubberConfig,
-    UpstreamsConfig,
     UpstreamProvider,
+    UpstreamsConfig,
 )
 from src.proxy_server import (
     AsyncProxyServer,
     ConnectionPool,
-    ProxyRoute,
     RequestContext,
 )
-from src.scrubber import PIIScrubber, ScrubResult
-from src.audit import AuditEvent, AuditEventType, AuditLogger
+from src.scrubber import PIIScrubber
 
 
 @pytest.fixture
@@ -404,9 +403,9 @@ class TestScrubIntegration:
 
         try:
             pii_body = (
-                '{"user": "alice@example.com", "phone": "555-123-4567", '
-                '"ssn": "123-45-6789", "note": "hello"}'
-            ).encode()
+                b'{"user": "alice@example.com", "phone": "555-123-4567", '
+                b'"ssn": "123-45-6789", "note": "hello"}'
+            )
 
             request = (
                 f"POST http://{upstream_server[0]}:{upstream_server[1]}/api HTTP/1.1\r\n"

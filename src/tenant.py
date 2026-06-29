@@ -8,11 +8,10 @@ hot-reload via periodic async scanning.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
-import os
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -34,25 +33,25 @@ class TenantRateLimit(BaseModel):
 class TenantScrubber(BaseModel):
     """Scrubber configuration for a tenant."""
     enabled: bool = True
-    pii_presets: List[str] = Field(default_factory=list)
-    custom_patterns: Dict[str, str] = Field(default_factory=dict)
-    redact_headers: List[str] = Field(default_factory=list)
-    redact_query_params: List[str] = Field(default_factory=list)
+    pii_presets: list[str] = Field(default_factory=list)
+    custom_patterns: dict[str, str] = Field(default_factory=dict)
+    redact_headers: list[str] = Field(default_factory=list)
+    redact_query_params: list[str] = Field(default_factory=list)
     mask_partial: bool = Field(default=False)
-    hash_salt: Optional[str] = None
+    hash_salt: str | None = None
 
 
 class TenantConfig(BaseModel):
     """Full configuration for a single tenant."""
     tenant_id: str
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
     enabled: bool = True
     rate_limit: TenantRateLimit = Field(default_factory=TenantRateLimit)
     scrubber: TenantScrubber = Field(default_factory=TenantScrubber)
-    allowed_upstreams: List[str] = Field(default_factory=list)
-    custom_pii_presets: Dict[str, List[str]] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    allowed_upstreams: list[str] = Field(default_factory=list)
+    custom_pii_presets: dict[str, list[str]] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +101,7 @@ class TenantManager:
         self,
         tenants_dir: Path,
         scan_interval: float = 60.0,
-        default_tenant: Optional[TenantConfig] = None,
+        default_tenant: TenantConfig | None = None,
     ) -> None:
         """
         Args:
@@ -114,9 +113,9 @@ class TenantManager:
         self._tenants_dir = Path(tenants_dir)
         self._scan_interval = scan_interval
         self._default_tenant = default_tenant or DEFAULT_TENANT
-        self._tenants: Dict[str, TenantConfig] = {}
-        self._file_mtimes: Dict[str, float] = {}
-        self._task: Optional[asyncio.Task] = None
+        self._tenants: dict[str, TenantConfig] = {}
+        self._file_mtimes: dict[str, float] = {}
+        self._task: asyncio.Task | None = None
         self._running = False
 
         # Load once synchronously so the manager is usable immediately
@@ -138,7 +137,7 @@ class TenantManager:
         logger.info("Tenant %r not found – returning default fallback", tenant_id)
         return self._default_tenant.model_copy(update={"tenant_id": tenant_id})
 
-    def list_tenants(self) -> List[str]:
+    def list_tenants(self) -> list[str]:
         """Return a sorted list of all loaded tenant IDs."""
         return sorted(self._tenants.keys())
 
@@ -149,7 +148,7 @@ class TenantManager:
         """
         self._tenants_dir.mkdir(parents=True, exist_ok=True)
 
-        current_ids: Set[str] = set()
+        current_ids: set[str] = set()
         for ext in ("*.yml", "*.yaml"):
             for fpath in sorted(self._tenants_dir.glob(ext)):
                 tenant_id = fpath.stem
@@ -196,10 +195,8 @@ class TenantManager:
         self._running = False
         if self._task is not None:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
             self._task = None
         logger.info("TenantManager watcher stopped")
 
@@ -222,7 +219,7 @@ class TenantManager:
     @staticmethod
     def _parse_file(path: Path) -> TenantConfig:
         """Parse a single YAML file into a :class:`TenantConfig`."""
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             raw = yaml.safe_load(fh) or {}
         if not isinstance(raw, dict):
             raise ValueError(f"Expected YAML mapping at top level, got {type(raw).__name__}")
@@ -232,7 +229,7 @@ class TenantManager:
     # Context-manager support (optional convenience)
     # ------------------------------------------------------------------
 
-    async def __aenter__(self) -> "TenantManager":
+    async def __aenter__(self) -> TenantManager:
         await self.start()
         return self
 

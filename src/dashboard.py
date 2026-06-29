@@ -32,23 +32,22 @@ import json
 import logging
 import time
 from collections import deque
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, AsyncGenerator, Optional
+from typing import Any
 
+import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
-
-import yaml
 
 from .classifier import ClassificationResult, DataClassifier, SensitivityLevel
 from .config import Config
 from .scrubber import PIIScrubber, ScrubResult
 from .sliding_window_ratelimiter import (
     MemoryRateLimiterBackend,
-    RateLimiterBackend,
     SlidingWindowRateLimiter,
 )
 from .tenant import TenantConfig, TenantManager
@@ -204,12 +203,12 @@ def get_event_broker() -> EventBroker:
 def create_dashboard(
     config: Config,
     scrubber: PIIScrubber,
-    get_stats: Optional[callable] = None,
-    get_recent_audits: Optional[callable] = None,
-    tenant_manager: Optional[TenantManager] = None,
-    classifier: Optional[DataClassifier] = None,
-    rate_limiter: Optional[SlidingWindowRateLimiter] = None,
-    token_buckets: Optional[TenantTokenBuckets] = None,
+    get_stats: callable | None = None,
+    get_recent_audits: callable | None = None,
+    tenant_manager: TenantManager | None = None,
+    classifier: DataClassifier | None = None,
+    rate_limiter: SlidingWindowRateLimiter | None = None,
+    token_buckets: TenantTokenBuckets | None = None,
 ) -> FastAPI:
     """Create the FastAPI dashboard app.
 
@@ -396,7 +395,7 @@ def create_dashboard(
                     try:
                         payload = await asyncio.wait_for(queue.get(), timeout=30.0)
                         yield payload
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         # Send keep-alive comment
                         yield f": ping {time.time()}\n\n"
             except asyncio.CancelledError:
@@ -459,7 +458,7 @@ def create_dashboard(
             raise HTTPException(status_code=503, detail="TenantManager not available")
 
         # Merge with existing config if tenant exists
-        existing: Optional[TenantConfig] = None
+        existing: TenantConfig | None = None
         if tenant_id in tenant_manager:
             existing = tenant_manager.get_tenant(tenant_id)
 
@@ -689,13 +688,13 @@ def create_dashboard(
         }
 
     @app.post("/api/rate-limits/reset")
-    async def rate_limits_reset(body: Optional[dict[str, str]] = None) -> dict[str, Any]:
+    async def rate_limits_reset(body: dict[str, str] | None = None) -> dict[str, Any]:
         """Reset rate-limit state.
 
         Accepts optional JSON body: {"tenant_id": "acme"} to reset a single tenant,
         or an empty body / {"all": true} to reset all.
         """
-        target_tenant: Optional[str] = None
+        target_tenant: str | None = None
         if body:
             target_tenant = body.get("tenant_id")
 

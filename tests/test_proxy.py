@@ -5,20 +5,18 @@ from __future__ import annotations
 import asyncio
 import socket
 import time
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 
-from src.config import Config, ProxyServerConfig, ScrubberConfig, AuditConfig, UpstreamsConfig
+from src.audit import AuditEvent, AuditEventType, AuditLogger
+from src.config import AuditConfig, Config, ProxyServerConfig, ScrubberConfig, UpstreamsConfig
 from src.proxy_server import (
     AsyncProxyServer,
     ConnectionPool,
     RequestContext,
-    ProxyRoute,
 )
-from src.scrubber import PIIScrubber
-from src.audit import AuditEvent, AuditEventType, AuditLogger
 
 
 @pytest_asyncio.fixture

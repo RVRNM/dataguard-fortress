@@ -65,7 +65,7 @@ async def main():
 
     # 3. RATE LIMITER
     print("\n[3] RATE LIMITER")
-    from src.token_bucket import TokenBucket, MemoryTokenBucketBackend
+    from src.token_bucket import MemoryTokenBucketBackend, TokenBucket
     backend = MemoryTokenBucketBackend()
     bucket = TokenBucket(backend=backend, key="audit-test", rate=10.0, capacity=5.0)
     acquired = 0
@@ -74,7 +74,7 @@ async def main():
             acquired += 1
     check("Token bucket burst+block", acquired == 5, f"acquired={acquired}")
 
-    from src.sliding_window_ratelimiter import SlidingWindowRateLimiter, MemoryRateLimiterBackend
+    from src.sliding_window_ratelimiter import MemoryRateLimiterBackend, SlidingWindowRateLimiter
     sw = SlidingWindowRateLimiter(MemoryRateLimiterBackend(), max_requests=3, window_seconds=60)
     sw_count = 0
     for _ in range(5):
@@ -86,7 +86,7 @@ async def main():
 
     # AUDIT LOGGER
     print("\n[4] AUDIT LOGGER")
-    from src.audit import AuditLogger, AuditEvent, AuditEventType
+    from src.audit import AuditEvent, AuditEventType, AuditLogger
     os.makedirs("./tmp_audit", exist_ok=True)
     alog = AuditLogger()
     alog._log_dir = Path("./tmp_audit")
@@ -121,8 +121,8 @@ async def main():
 
     # 6. ORCHESTRATOR
     print("\n[6] ORCHESTRATOR (full pipeline)")
-    from src.orchestrator import DataGuardOrchestrator, OrchestratorDecision
     from src.config import Config
+    from src.orchestrator import DataGuardOrchestrator
     orch = DataGuardOrchestrator(Config())
     await orch.start()
     r = await orch.process_request("default", b"Hello world")

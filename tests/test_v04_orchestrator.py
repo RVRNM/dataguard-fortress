@@ -1,12 +1,12 @@
 """v0.4 Orchestrator E2E test."""
 import asyncio
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.orchestrator import DataGuardOrchestrator, OrchestratorDecision
 from src.config import Config
+from src.orchestrator import DataGuardOrchestrator
 
 
 async def main():

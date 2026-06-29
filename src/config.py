@@ -18,7 +18,6 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field
 
-
 # ── Pydantic Models for Config Validation ──────────────────────────────────────
 
 class ServerConfig(BaseModel):
@@ -177,7 +176,7 @@ def load_config(path: str | Path) -> Config:
             if cached_mtime == mtime:
                 return cached_config
 
-    with open(path, "r") as f:
+    with open(path) as f:
         raw = yaml.safe_load(f) or {}
 
     substituted = _substitute_env_vars(raw)

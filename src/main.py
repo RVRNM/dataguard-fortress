@@ -8,13 +8,11 @@ import logging
 import os
 import signal
 import sys
-from pathlib import Path
 
 from src import __version__
 from src.config import Config, create_default_config, load_config
-from src.proxy_server import AsyncProxyServer, WindowsServiceAdapter
+from src.proxy_server import AsyncProxyServer
 from src.scrubber import PIIScrubber
-from src.audit import AuditLogger
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
@@ -92,7 +90,7 @@ async def run_server(args: argparse.Namespace) -> None:
         min_confidence=config.scrubber.min_confidence,
     )
 
-    audit = create_audit_logger(config) if config.audit.enabled else None
+    audit = AuditLogger(config=config) if config.audit.enabled else None
 
     # Override port from config if set
     config.proxy.port = config.proxy.port
@@ -105,7 +103,7 @@ async def run_server(args: argparse.Namespace) -> None:
     )
 
     # Signal handlers
-    loop = asyncio.get_event_loop()
+    asyncio.get_event_loop()
 
     def _shutdown(signum, frame):
         logging.getLogger("dataguard.main").info(f"Signal {signum} received, shutting down...")

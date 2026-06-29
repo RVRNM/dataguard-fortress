@@ -7,11 +7,10 @@ per-window rate limits (e.g., "max 100 requests per 60 seconds").
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ class RateLimiterBackend(ABC):
         """Count requests for *key* within the last *window* seconds from *now*."""
 
     @abstractmethod
-    async def get_oldest(self, key: str) -> Optional[float]:
+    async def get_oldest(self, key: str) -> float | None:
         """Return the oldest active timestamp or None."""
 
     @abstractmethod
@@ -45,7 +44,7 @@ class MemoryRateLimiterBackend(RateLimiterBackend):
     """In-memory list-based backend. Suitable for tests and single-instance."""
 
     def __init__(self) -> None:
-        self._store: Dict[str, List[float]] = {}
+        self._store: dict[str, list[float]] = {}
         self._lock = asyncio.Lock()
 
     async def add_timestamp(self, key: str, ts: float, window: float) -> None:
@@ -63,7 +62,7 @@ class MemoryRateLimiterBackend(RateLimiterBackend):
             cutoff = now - window
             return sum(1 for t in entries if t > cutoff)
 
-    async def get_oldest(self, key: str) -> Optional[float]:
+    async def get_oldest(self, key: str) -> float | None:
         async with self._lock:
             entries = self._store.get(key, [])
             return min(entries) if entries else None
@@ -102,7 +101,7 @@ class RedisRateLimiterBackend(RateLimiterBackend):
         min_score = now - window
         return await self._redis.zcount(key, min_score, "+inf")  # type: ignore[no-any-return]
 
-    async def get_oldest(self, key: str) -> Optional[float]:
+    async def get_oldest(self, key: str) -> float | None:
         results = await self._redis.zrange(key, 0, 0, withscores=True)
         if results:
             return results[0][1]
@@ -152,7 +151,7 @@ class SlidingWindowRateLimiter:
     def window_seconds(self) -> float:
         return self._window_seconds
 
-    async def check(self, key: str) -> Tuple[bool, dict]:
+    async def check(self, key: str) -> tuple[bool, dict]:
         """Check if a new request for *key* is allowed.
 
         Returns:
@@ -163,17 +162,11 @@ class SlidingWindowRateLimiter:
         now = time.monotonic()
         count = await self._backend.count_recent(key, self._window_seconds, now)
 
-        if count < self._max_requests:
-            allowed = True
-        else:
-            allowed = False
+        allowed = count < self._max_requests
 
         # Compute reset info
         oldest = await self._backend.get_oldest(key)
-        if oldest is not None:
-            reset_at = oldest + self._window_seconds
-        else:
-            reset_at = now + self._window_seconds
+        reset_at = oldest + self._window_seconds if oldest is not None else now + self._window_seconds
 
         remaining = max(0, self._max_requests - count)
         return allowed, {
@@ -184,7 +177,7 @@ class SlidingWindowRateLimiter:
             "reset_at": reset_at,
         }
 
-    async def record(self, key: str) -> Tuple[bool, dict]:
+    async def record(self, key: str) -> tuple[bool, dict]:
         """Record a request for *key* and check if it's allowed.
 
         Unlike :meth:`check`, this increments the counter.  Returns the
@@ -195,16 +188,10 @@ class SlidingWindowRateLimiter:
         await self._backend.add_timestamp(key, ts=now, window=self._window_seconds)
         count = await self._backend.count_recent(key, self._window_seconds, now)
 
-        if count <= self._max_requests:
-            allowed = True
-        else:
-            allowed = False
+        allowed = count <= self._max_requests
 
         oldest = await self._backend.get_oldest(key)
-        if oldest is not None:
-            reset_at = oldest + self._window_seconds
-        else:
-            reset_at = now + self._window_seconds
+        reset_at = oldest + self._window_seconds if oldest is not None else now + self._window_seconds
 
         remaining = max(0, self._max_requests - count)
         return allowed, {

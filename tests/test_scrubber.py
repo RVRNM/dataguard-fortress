@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import pytest
-import pytest_asyncio
 
-from src.scrubber import PIIScrubber, PatternPreset, ScrubResult, Detection, _build_presets
+from src.scrubber import Detection, PatternPreset, PIIScrubber, ScrubResult, _build_presets
 
 
 class TestPIIScrubberBasics:

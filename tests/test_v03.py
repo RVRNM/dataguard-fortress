@@ -12,26 +12,24 @@ import time
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 
 # Ensure project root is importable
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.token_bucket import (
-    MemoryTokenBucketBackend,
-    RedisTokenBucketBackend,
-    TenantTokenBuckets,
-    TokenBucket,
-)
-from src.tenant import DEFAULT_TENANT, TenantConfig, TenantManager
 from src.classifier import ClassificationResult, DataClassifier, SensitivityLevel
 from src.sliding_window_ratelimiter import (
     MemoryRateLimiterBackend,
     RedisRateLimiterBackend,
     SlidingWindowRateLimiter,
 )
-
+from src.tenant import DEFAULT_TENANT, TenantConfig, TenantManager
+from src.token_bucket import (
+    MemoryTokenBucketBackend,
+    RedisTokenBucketBackend,
+    TenantTokenBuckets,
+    TokenBucket,
+)
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TestTokenBucket
@@ -529,8 +527,9 @@ class TestTenantManager:
 
     def test_reload_removes_deleted_tenants(self, manager: TenantManager) -> None:
         """Reload removes tenants whose files were deleted."""
-        import yaml as _yaml
         import os
+
+        import yaml as _yaml
 
         fpath = manager.tenants_dir / "temp-tenant.yml"
         with open(fpath, "w") as f:

@@ -19,23 +19,24 @@ Usage::
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from src.classifier import ClassificationResult, DataClassifier, SensitivityLevel
 from src.config import Config
-from src.tenant import TenantManager, TenantConfig
+from src.sliding_window_ratelimiter import (
+    MemoryRateLimiterBackend,
+    RateLimiterBackend,
+    SlidingWindowRateLimiter,
+)
+from src.tenant import TenantConfig, TenantManager
 from src.token_bucket import (
     MemoryTokenBucketBackend,
     TenantTokenBuckets,
     TokenBucketBackend,
-)
-from src.sliding_window_ratelimiter import (
-    MemoryRateLimiterBackend,
-    SlidingWindowRateLimiter,
-    RateLimiterBackend,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,8 +47,8 @@ class OrchestratorDecision:
     """Result of the orchestrator's pre-forward processing."""
 
     forward: bool = True
-    classification: Optional[ClassificationResult] = None
-    tenant: Optional[TenantConfig] = None
+    classification: ClassificationResult | None = None
+    tenant: TenantConfig | None = None
     rate_limited: bool = False
     rate_limit_info: dict[str, Any] = field(default_factory=dict)
     tenant_id: str = "default"
@@ -72,8 +73,8 @@ class DataGuardOrchestrator:
     def __init__(
         self,
         config: Config,
-        tenant_manager: Optional[TenantManager] = None,
-        classifier: Optional[DataClassifier] = None,
+        tenant_manager: TenantManager | None = None,
+        classifier: DataClassifier | None = None,
     ) -> None:
         self._config = config
 
@@ -106,7 +107,7 @@ class DataGuardOrchestrator:
         )
 
         self._running = False
-        self._reload_task: Optional[asyncio.Task[None]] = None
+        self._reload_task: asyncio.Task[None] | None = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -132,10 +133,8 @@ class DataGuardOrchestrator:
 
         if self._reload_task is not None:
             self._reload_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._reload_task
-            except asyncio.CancelledError:
-                pass
             self._reload_task = None
 
         await self._tenant_manager.stop()
@@ -189,7 +188,7 @@ class DataGuardOrchestrator:
         # v0.4: always allow, but track info
         return True, info
 
-    async def classify_body(self, body: Optional[bytes]) -> ClassificationResult:
+    async def classify_body(self, body: bytes | None) -> ClassificationResult:
         """Classify the request body.
 
         Returns PUBLIC for empty/missing bodies.
@@ -207,7 +206,7 @@ class DataGuardOrchestrator:
     async def process_request(
         self,
         tenant_id: str,
-        body: Optional[bytes] = None,
+        body: bytes | None = None,
     ) -> OrchestratorDecision:
         """Process a request through the full pipeline (tenant resolution,
         rate limiting, classification).

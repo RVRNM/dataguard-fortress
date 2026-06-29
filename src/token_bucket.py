@@ -14,8 +14,8 @@ import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,11 @@ class TokenBucketBackend(ABC):
     """Abstract backend for token-bucket state storage."""
 
     @abstractmethod
-    async def get_state(self, key: str) -> Optional[dict]:
+    async def get_state(self, key: str) -> dict | None:
         """Return stored state dict or None if key doesn't exist."""
 
     @abstractmethod
-    async def set_state(self, key: str, state: dict, ttl: Optional[float] = None) -> None:
+    async def set_state(self, key: str, state: dict, ttl: float | None = None) -> None:
         """Persist state dict for key."""
 
     @abstractmethod
@@ -45,11 +45,11 @@ class MemoryTokenBucketBackend(TokenBucketBackend):
     """In-memory dict-based backend. Suitable for single-instance deployments."""
 
     def __init__(self) -> None:
-        self._store: Dict[str, dict] = {}
-        self._expiry: Dict[str, float] = {}
+        self._store: dict[str, dict] = {}
+        self._expiry: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
-    async def get_state(self, key: str) -> Optional[dict]:
+    async def get_state(self, key: str) -> dict | None:
         async with self._lock:
             # Check expiry
             if key in self._expiry and time.monotonic() > self._expiry[key]:
@@ -59,7 +59,7 @@ class MemoryTokenBucketBackend(TokenBucketBackend):
             state = self._store.get(key)
             return state.copy() if state is not None else None
 
-    async def set_state(self, key: str, state: dict, ttl: Optional[float] = None) -> None:
+    async def set_state(self, key: str, state: dict, ttl: float | None = None) -> None:
         async with self._lock:
             self._store[key] = state.copy()
             if ttl is not None:
@@ -84,7 +84,7 @@ class RedisTokenBucketBackend(TokenBucketBackend):
     def __init__(self, redis_client: Any) -> None:
         self._redis = redis_client
 
-    async def get_state(self, key: str) -> Optional[dict]:
+    async def get_state(self, key: str) -> dict | None:
         import json
 
         data = await self._redis.get(key)
@@ -94,7 +94,7 @@ class RedisTokenBucketBackend(TokenBucketBackend):
             data = data.decode("utf-8")
         return json.loads(data)
 
-    async def set_state(self, key: str, state: dict, ttl: Optional[float] = None) -> None:
+    async def set_state(self, key: str, state: dict, ttl: float | None = None) -> None:
         import json
 
         raw = json.dumps(state)
@@ -143,7 +143,7 @@ class TokenBucket:
         key: str,
         rate: float,
         capacity: int,
-        ttl: Optional[float] = 3600.0,
+        ttl: float | None = 3600.0,
     ) -> None:
         if rate <= 0:
             raise ValueError("rate must be positive")
@@ -270,13 +270,13 @@ class TenantTokenBuckets:
         backend: TokenBucketBackend,
         rate: float = 10.0,
         capacity: int = 50,
-        ttl: Optional[float] = 3600.0,
+        ttl: float | None = 3600.0,
     ) -> None:
         self._backend = backend
         self._rate = rate
         self._capacity = capacity
         self._ttl = ttl
-        self._buckets: Dict[str, TokenBucket] = {}
+        self._buckets: dict[str, TokenBucket] = {}
 
     def get_bucket(self, tenant_id: str) -> TokenBucket:
         if tenant_id not in self._buckets:

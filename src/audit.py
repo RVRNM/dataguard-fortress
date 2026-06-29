@@ -10,21 +10,21 @@ Provides:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import gzip
 import json
 import logging
 import shutil
-import time
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
-class AuditEventType(str, Enum):
+class AuditEventType(StrEnum):
     """Types of audit events."""
     REQUEST = "request"
     RESPONSE = "response"
@@ -139,10 +139,8 @@ class AuditLogger:
         """Stop the logger: flush remaining buffer and cancel timer."""
         if self._flush_task:
             self._flush_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._flush_task
-            except asyncio.CancelledError:
-                pass
 
         await self._flush()
         logger.info("Audit logger stopped.")
@@ -181,7 +179,7 @@ class AuditLogger:
 
         # Set timestamp if not provided
         if not event.timestamp:
-            event.timestamp = datetime.now(timezone.utc).isoformat()
+            event.timestamp = datetime.now(UTC).isoformat()
 
         line = event.model_dump_json()
 
@@ -239,14 +237,13 @@ class AuditLogger:
             return
 
         if self.log_path.stat().st_size >= self._max_size_bytes:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             archive_name = f"audit_{timestamp}.jsonl.gz"
             archive_path = self._log_dir / archive_name
 
             # Compress the current file to archive
-            with open(self.log_path, "rb") as f_in:
-                with gzip.open(archive_path, "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            with open(self.log_path, "rb") as f_in, gzip.open(archive_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
             # Remove the original
             self.log_path.unlink()
@@ -297,7 +294,7 @@ class AuditLogger:
     def _read_lines_sync(self) -> list[str]:
         """Read all lines from the log file."""
         try:
-            with open(self.log_path, "r", encoding="utf-8") as f:
+            with open(self.log_path, encoding="utf-8") as f:
                 return f.readlines()
         except OSError:
             return []
@@ -312,7 +309,7 @@ class AuditLogger:
             if f.suffix == ".jsonl":
                 # Count lines in the active file
                 try:
-                    with open(f, "r", encoding="utf-8") as fh:
+                    with open(f, encoding="utf-8") as fh:
                         total_events += sum(1 for line in fh if line.strip())
                 except OSError:
                     pass
