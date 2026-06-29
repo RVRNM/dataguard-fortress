@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  dataguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dataguard-fortress
+    restart: unless-stopped
+    ports:
+      - "${DG_PORT:-8080}:8080"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - dataguard-logs:/app/logs
+    environment:
+      - DG_REDIS_URL=redis://redis:6379/0
+      - DG_ENCRYPTION_KEY=${DG_ENCRYPTION_KEY:-}
+      - TZ=UTC
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - dataguard-net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: dataguard-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis-data:/data
+    networks:
+      - dataguard-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dataguard-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROM_PORT:-9090}:9090"
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    networks:
+      - dataguard-net
+    profiles:
+      - monitoring
+
+networks:
+  dataguard-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  dataguard-logs:
+  redis-data:
+  prom-data:

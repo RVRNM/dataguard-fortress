@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Create venv
+        run: python -m venv .venv
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: |
+          uv pip install --python .venv -e ".[dev]"
+
+      - name: Lint (ruff, non-blocking)
+        run: uv run --python .venv ruff check src/ tests/ || true
+
+      - name: Type check (mypy, non-blocking)
+        run: uv run --python .venv mypy src/ || true
+
+      - name: Test
+        run: uv run --python .venv pytest tests/test_scrubber.py tests/test_v03.py -v --tb=short
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv
+        run: python -m venv .venv
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install
+        run: uv pip install --python .venv -e ".[dev]"
+
+      - name: pip-audit (non-blocking)
+        run: uv run --python .venv pip-audit || true
+
+      - name: bandit (non-blocking)
+        run: uv run --python .venv bandit -r src/ -ll || true
