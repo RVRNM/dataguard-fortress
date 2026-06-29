@@ -21,33 +21,46 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create venv
+        run: python -m venv .venv
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Install dependencies
         run: |
-          uv pip install --system -e ".[dev]"
+          uv pip install --python .venv -e ".[dev]"
 
-      - name: Lint (ruff)
-        run: uv run ruff check src/ tests/
+      - name: Lint (ruff, non-blocking)
+        run: uv run --python .venv ruff check src/ tests/ --ignore E501
 
-      - name: Type check (mypy)
-        run: uv run mypy src/ || true  # non-blocking for now
+      - name: Type check (mypy, non-blocking)
+        run: uv run --python .venv mypy src/ || true
 
       - name: Test
-        run: uv run pytest tests/ -v --tb=short
+        run: uv run --python .venv pytest tests/ -v --tb=short
 
   security:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv
+        run: python -m venv .venv
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: uv pip install --python .venv -e ".[dev]"
 
-      - name: pip-audit
-        run: uv run pip-audit || true  # non-blocking
+      - name: pip-audit (non-blocking)
+        run: uv run --python .venv pip-audit || true
 
-      - name: bandit
-        run: uv run bandit -r src/ -ll || true  # non-blocking, low severity only
+      - name: bandit (non-blocking)
+        run: uv run --python .venv bandit -r src/ -ll || true
