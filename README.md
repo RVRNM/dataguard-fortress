@@ -1,6 +1,6 @@
 <div align="center">
 
-# �️ DataGuard Fortress
+# 🛡️ DataGuard Fortress
 
 **Self-hosted privacy proxy for AI agents — scrub PII inline, classify sensitivity, rate-limit per tenant, and audit every request.**
 
@@ -28,12 +28,12 @@ DataGuard Fortress sits **between** your AI agents and upstream LLM providers, e
 
 | Capability | What it does |
 |------------|-------------|
-| � **PII Scrubbing** | 52 built-in regex presets redact sensitive data inline |
-| �️ **Sensitivity Classification** | PUBLIC → INTERNAL → CONFIDENTIAL → RESTRICTED |
+| 🔒 **PII Scrubbing** | 52 built-in regex presets redact sensitive data inline |
+| 🏷️ **Sensitivity Classification** | PUBLIC → INTERNAL → CONFIDENTIAL → RESTRICTED |
 | 🚦 **Rate Limiting** | Token bucket + sliding window, per-tenant |
-| � **Audit Logging** | Append-only JSONL with hash chain integrity |
+| 📝 **Audit Logging** | Append-only JSONL with hash chain integrity |
 | 🏢 **Multi-tenant** | Per-customer YAML configs with hot-reload |
-| � **Live Dashboard** | SSE-powered real-time UI |
+| 📊 **Live Dashboard** | SSE-powered real-time UI |
 
 ## Architecture
 
@@ -137,8 +137,8 @@ scrubber:
 Visit `http://localhost:8080/` after startup:
 
 - 📊 **Live stats** — requests/sec, PII detected, blocked
-- � **Scrub playground** — test PII scrubbing on custom text
-- �️ **Presets browser** — search/filter 52 PII presets
+- [SECURE] **Scrub playground** — test PII scrubbing on custom text
+- [PRIVACY] **Presets browser** — search/filter 52 PII presets
 - 📋 **Audit feed** — SSE-powered live event stream
 
 ## GDPR / Compliance
@@ -169,7 +169,7 @@ Visit `http://localhost:8080/` after startup:
 | v0.3 | Rate limiter + classifier + multi-tenant | ✅ Done |
 | v0.4 | Orchestrator integration + full API | ✅ Done |
 | v0.5 | AES-GCM encryption layer | 🔜 |
-| v1.0 | Public release | � |
+| v1.0 | Public release | [SECURE] |
 
 ## License
 

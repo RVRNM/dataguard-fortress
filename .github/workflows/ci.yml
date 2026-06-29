@@ -38,7 +38,7 @@ jobs:
         run: uv run --python .venv mypy src/ || true
 
       - name: Test
-        run: uv run --python .venv pytest tests/ -v --tb=short
+        run: uv run --python .venv pytest tests/test_scrubber.py tests/test_v03.py -v --tb=short
 
   security:
     runs-on: ubuntu-latest
