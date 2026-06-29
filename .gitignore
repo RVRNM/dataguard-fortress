@@ -1,4 +1,7 @@
-# Ignore Python artifacts
+# Test secrets (avoid GitHub Push Protection false positives)
+tests/_test_secrets.py
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class

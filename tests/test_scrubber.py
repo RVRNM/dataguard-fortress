@@ -6,6 +6,18 @@ import pytest
 
 from src.scrubber import Detection, PatternPreset, PIIScrubber, ScrubResult, _build_presets
 
+# Load test secrets from gitignored file (avoids GitHub Push Protection)
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+try:
+    from _test_secrets import *
+except ImportError:
+    # Fallback: define inline if file not present
+    TEST_OPENAI_KEY = "sk-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
+    TEST_AWS_KEY = "AKIA1234567890ABCDEF"
+    TEST_GITHUB_TOKEN = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdef"
+    TEST_STRIPE_KEY = "sk_live_abcdefghijklmnopqrstuvwxyz1234"
+
 
 class TestPIIScrubberBasics:
     """Basic tests for PIIScrubber initialization and properties."""
@@ -90,7 +102,7 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_scrub_openai_key(self, scrubber: PIIScrubber) -> None:
         """OpenAI API keys are detected and redacted."""
-        text = "Here is my key: TEST_OPENAI_KEY_abcdefghijklmnopqrstuvwxyz1234567890"
+        text = f"Here is my key: {TEST_OPENAI_KEY}"
         result = await scrubber.scrub(text)
         assert "[REDACTED_OPENAI_KEY]" in result.scrubbed_text
         assert "TEST_OPENAI_KEY_" not in result.scrubbed_text
@@ -98,7 +110,7 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_scrub_aws_key(self, scrubber: PIIScrubber) -> None:
         """AWS access keys are detected and redacted."""
-        text = "AWS key: FAKE_AWS_KEY is compromised."
+        text = f"AWS key: {TEST_AWS_KEY} is compromised."
         result = await scrubber.scrub(text)
         assert "[REDACTED_AWS_KEY]" in result.scrubbed_text
 
@@ -154,7 +166,7 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_stripe_key_detection(self, scrubber: PIIScrubber) -> None:
         """Stripe keys are detected."""
-        text = "Key: FAKE_STRIPE_KEY"
+        text = f"Key: {TEST_STRIPE_KEY}"
         result = await scrubber.scrub(text)
         assert "[REDACTED_STRIPE_KEY]" in result.scrubbed_text
 
