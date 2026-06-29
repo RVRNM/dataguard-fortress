@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataGuard Fortress — Dashboard</title>
+    <style>
+        :root {
+            --bg: #0b1120;
+            --bg-elevated: #111827;
+            --card: #1a2332;
+            --card-hover: #1e293b;
+            --border: #2d3748;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --green: #10b981;
+            --green-dim: #065f46;
+            --red: #ef4444;
+            --red-dim: #7f1d1d;
+            --yellow: #f59e0b;
+            --yellow-dim: #78350f;
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { font-size: 14px; }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ─────────────────────────────────────────────────────── */
+
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.online {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-badge.online .status-dot { background: var(--green); }
+        .status-badge.offline .status-dot { background: var(--red); animation: none; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* ── Main Layout ────────────────────────────────────────────────── */
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+
+        /* ── Stats Grid ─────────────────────────────────────────────────── */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .stat-card.accent::before { background: var(--accent); }
+        .stat-card.green::before { background: var(--green); }
+        .stat-card.red::before { background: var(--red); }
+        .stat-card.purple::before { background: var(--purple); }
+        .stat-card.cyan::before { background: var(--cyan); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+        }
+
+        .stat-value.accent { color: var(--accent); }
+        .stat-value.green { color: var(--green); }
+        .stat-value.red { color: var(--red); }
+        .stat-value.purple { color: var(--purple); }
+        .stat-value.cyan { color: var(--cyan); }
+
+        .stat-sub {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 0.25rem;
+        }
+
+        /* ── Section Headers ────────────────────────────────────────────── */
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-badge {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ── Two Column Layout ──────────────────────────────────────────── */
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* ── Cards ──────────────────────────────────────────────────────── */
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        /* ── Scrub Playground ───────────────────────────────────────────── */
+
+        .playground-area {
+            width: 100%;
+            min-height: 120px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+
+        .playground-area:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .playground-area::placeholder {
+            color: var(--text-dim);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.55rem 1.1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-sans);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover { background: var(--card-hover); }
+
+        .btn-sm {
+            padding: 0.3rem 0.65rem;
+            font-size: 0.75rem;
+        }
+
+        .playground-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .scrub-result {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .scrub-result.visible { display: block; }
+
+        .result-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .entity-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        .entity-tag.high-conf {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--red);
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+
+        /* ── Audit Feed ──────────────────────────────────────────────────── */
+
+        .audit-table-wrap {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .audit-table th {
+            text-align: left;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--card);
+            z-index: 1;
+        }
+
+        .audit-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .audit-table tr:hover td {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .audit-table tr.new-row {
+            animation: highlightRow 2s ease-out;
+        }
+
+        @keyframes highlightRow {
+            0% { background: rgba(59, 130, 246, 0.2); }
+            100% { background: transparent; }
+        }
+
+        .event-type {
+            display: inline-block;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .event-type.request { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+        .event-type.scrub { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+        .event-type.scrub_test { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+        .event-type.proxy_connect { background: rgba(6, 182, 212, 0.15); color: var(--cyan); }
+        .event-type.proxy_error { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .event-type.rate_limit { background: rgba(245, 158, 11, 0.15); color: var(--yellow); }
+        .event-type.config_reload { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .event-type.response { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* ── Presets Browser ─────────────────────────────────────────────── */
+
+        .presets-toolbar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 0.85rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .search-input::placeholder { color: var(--text-dim); }
+
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .preset-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s, background 0.2s;
+            cursor: default;
+        }
+
+        .preset-card:hover {
+            border-color: var(--accent);
+            background: var(--card-hover);
+        }
+
+        .preset-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            font-family: var(--font-mono);
+        }
+
+        .preset-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .preset-type {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--accent);
+        }
+
+        .confidence-bar {
+            width: 50px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .confidence-fill.high { background: var(--green); }
+        .confidence-fill.medium { background: var(--yellow); }
+        .confidence-fill.low { background: var(--red); }
+
+        /* ── Scrollbar ───────────────────────────────────────────────────── */
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+        /* ── Animations ──────────────────────────────────────────────────── */
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+
+        /* ── Responsive ──────────────────────────────────────────────────── */
+
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .header { padding: 0.75rem 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 1.5rem; }
+            .presets-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Toast Notifications ─────────────────────────────────────────── */
+
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 0.8rem;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease-out;
+            max-width: 320px;
+        }
+
+        .toast.success { border-left: 3px solid var(--green); }
+        .toast.error { border-left: 3px solid var(--red); }
+        .toast.info { border-left: 3px solid var(--accent); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Tab Navigation ─────────────────────────────────────────────── */
+
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg-elevated);
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 0.4rem 0.85rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-muted);
+            border: none;
+            background: transparent;
+            font-family: var(--font-sans);
+        }
+
+        .tab:hover { color: var(--text); }
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="header">
+    <div class="header-left">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo">DataGuard Fortress</span>
+    </div>
+    <div class="header-right">
+        <span class="status-badge online" id="connStatus">
+            <span class="status-dot"></span>
+            <span id="connText">Live</span>
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-dim);" id="uptimeDisplay">—</span>
+    </div>
+</header>
+
+<!-- ── Main Content ────────────────────────────────────────────────────── -->
+<main class="container">
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card accent">
+            <div class="stat-label">Total Requests</div>
+            <div class="stat-value accent" id="statRequests">0</div>
+            <div class="stat-sub" id="statUptime">Uptime: —</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-label">PII Detected</div>
+            <div class="stat-value red" id="statPII">0</div>
+            <div class="stat-sub">Entities found in traffic</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-label">Blocked</div>
+            <div class="stat-value purple" id="statBlocked">0</div>
+            <div class="stat-sub">Requests denied</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">Req/sec</div>
+            <div class="stat-value green" id="statRPS">0</div>
+            <div class="stat-sub">10-second rolling avg</div>
+        </div>
+        <div class="stat-card cyan">
+            <div class="stat-label">Presets Active</div>
+            <div class="stat-value cyan" id="statPresets">0</div>
+            <div class="stat-sub">PII detection patterns</div>
+        </div>
+    </div>
+
+    <!-- Two Column: Scrub Playground + Audit Feed -->
+    <div class="two-col">
+
+        <!-- Scrub Playground -->
+        <div class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🧪 Scrub Playground</span>
+                    <span class="section-badge" id="scrubBadge">Live</span>
+                </div>
+                <div class="card-body">
+                    <textarea class="playground-area" id="scrubInput" placeholder="Paste text containing PII to test detection and redaction...">Contact: john.doe@example.com | Phone: +1 (555) 123-4567
+SSN: 123-45-6789 | CC: 4111 1111 1111 1111
+API Key: sk-proj-abc123def456ghi789
+IP: 192.168.1.100 | BTC: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</textarea>
+                    <div class="playground-actions">
+                        <button class="btn btn-primary" id="scrubBtn" onclick="testScrub()">🔍 Scrub Text</button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearScrub()">Clear</button>
+                        <button class="btn btn-secondary btn-sm" onclick="loadSample()">Load Sample</button>
+                    </div>
+                    <div class="scrub-result" id="scrubResult">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 600;">
+                            SCRUBBED OUTPUT
+                        </div>
+                        <div class="result-box" id="scrubOutput"></div>
+                        <div class="result-meta" id="scrubMeta"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Audit Feed -->
+        <div class="section">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 Live Audit Feed</span>
+                    <span class="section-badge" id="auditCount">0 events</span>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="audit-table-wrap">
+                        <table class="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Event</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditBody">
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📡</div>
+                                            Waiting for events...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presets Browser -->
+    <div class="section">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">🔐 PII Presets Browser</span>
+                <span class="section-badge" id="presetCount">Loading...</span>
+            </div>
+            <div class="card-body">
+                <div class="presets-toolbar">
+                    <input type="text" class="search-input" id="presetSearch" placeholder="Search presets by name or type..." oninput="filterPresets()">
+                    <div class="tabs" style="margin-left: auto;">
+                        <button class="tab active" onclick="setPresetView('grid', event)">Grid</button>
+                        <button class="tab" onclick="setPresetView('compact', event)">Compact</button>
+                    </div>
+                </div>
+                <div class="presets-grid" id="presetsGrid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⏳</div>
+                        Loading presets...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── JavaScript ──────────────────────────────────────────────────────── -->
+<script>
+(function() {
+    'use strict';
+
+    // ── State ──────────────────────────────────────────────────────────
+    const state = {
+        presets: [],
+        filteredPresets: [],
+        auditEvents: [],
+        maxAuditEvents: 100,
+        sseConnected: false,
+        lastStats: {},
+        presetView: 'grid',
+    };
+
+    // ── Utilities ──────────────────────────────────────────────────────
+
+    function formatNumber(n) {
+        if (n === null || n === undefined) return '—';
+        if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+        return String(n);
+    }
+
+    function formatTime(ts) {
+        if (!ts) return '—';
+        const d = new Date(ts * 1000);
+        return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function formatDuration(seconds) {
+        if (!seconds || seconds < 0) return '—';
+        if (seconds < 60) return Math.round(seconds) + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm ' + Math.round(seconds % 60) + 's';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────────
+
+    async function loadStats() {
+        try {
+            const r = await fetch('/api/stats');
+            if (!r.ok) throw new Error('Stats fetch failed');
+            const d = await r.json();
+            state.lastStats = d;
+
+            animateValue('statRequests', d.requests_total ?? 0);
+            animateValue('statPII', d.pii_detected ?? 0);
+            animateValue('statBlocked', d.requests_blocked ?? 0);
+            document.getElementById('statRPS').textContent = (d.requests_per_second ?? 0).toFixed(1);
+            document.getElementById('statUptime').textContent = 'Uptime: ' + formatDuration(d.uptime_seconds);
+            document.getElementById('uptimeDisplay').textContent = formatDuration(d.uptime_seconds);
+        } catch (e) {
+            console.warn('Stats load failed:', e);
+        }
+    }
+
+    function animateValue(elementId, target) {
+        const el = document.getElementById(elementId);
+        const current = parseInt(el.textContent.replace(/[^0-9-]/g, '')) || 0;
+        if (current === target) {
+            el.textContent = formatNumber(target);
+            return;
+        }
+        el.textContent = formatNumber(target);
+        el.style.transform = 'scale(1.05)';
+        setTimeout(() => { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.2s'; }, 50);
+    }
+
+    // ── Scrub Playground ───────────────────────────────────────────────
+
+    window.testScrub = async function() {
+        const input = document.getElementById('scrubInput').value;
+        const btn = document.getElementById('scrubBtn');
+
+        if (!input.trim()) {
+            showToast('Please enter some text to scrub', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Scrubbing...';
+
+        try {
+            const r = await fetch('/api/scrub', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input }),
+            });
+
+            if (!r.ok) throw new Error('Scrub request failed');
+            const d = await r.json();
+
+            const resultEl = document.getElementById('scrubResult');
+            const outputEl = document.getElementById('scrubOutput');
+            const metaEl = document.getElementById('scrubMeta');
+
+            resultEl.classList.add('visible');
+            outputEl.textContent = d.scrubbed_text || '(empty)';
+
+            let metaHtml = `<span style="color: var(--text-muted); font-size: 0.75rem;">${d.detections} detection${d.detections !== 1 ? 's' : ''}</span>`;
+            if (d.entities) {
+                metaHtml += d.entities.map(e => {
+                    const confClass = e.confidence >= 0.9 ? 'high-conf' : '';
+                    return `<span class="entity-tag ${confClass}" title="Confidence: ${(e.confidence * 100).toFixed(0)}%">${e.type}</span>`;
+                }).join('');
+            }
+            metaEl.innerHTML = metaHtml;
+
+            if (d.detections > 0) {
+                showToast(`Found ${d.detections} PII entity type${d.detections !== 1 ? 's' : ''}`, 'success');
+            } else {
+                showToast('No PII detected in text', 'info');
+            }
+        } catch (e) {
+            showToast('Scrub failed: ' + e.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔍 Scrub Text';
+        }
+    };
+
+    window.clearScrub = function() {
+        document.getElementById('scrubInput').value = '';
+        document.getElementById('scrubResult').classList.remove('visible');
+    };
+
+    window.loadSample = function() {
+        const samples = [
+            `User profile:
+Name: Jane Smith
+Email: jane.smith@company.org
+Phone: +1-555-867-5309
+SSN: 987-65-4321
+Credit Card: 4532 1234 5678 9012
+API Key: sk_live_REDACTED
+Bitcoin: 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
+Ethereum: 0x742d35Cc6634C0532925a3b844Bc9e7595f2bD08`,
+
+            `Server logs:
+[2024-01-15] Connection from 10.0.0.45
+[2024-01-15] Auth token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+[2024-01-15] User agent: Mozilla/5.0
+[2024-01-15] X-Forwarded-For: 203.0.113.42
+[2024-01-15] AWS Key: AKIAIOSFODNN7EXAMPLE`,
+
+            `Patient record:
+MRN: 123456789
+Insurance: INS-9876543210
+DOB: 1985-03-15
+Phone: (305) 555-0198
+Email: patient@healthcare.med
+Passport: AB1234567
+Driver License: FL-D123-456-78-901-0`,
+        ];
+        const sample = samples[Math.floor(Math.random() * samples.length)];
+        document.getElementById('scrubInput').value = sample;
+    };
+
+    // ── Audit Feed ─────────────────────────────────────────────────────
+
+    function addAuditEvent(event) {
+        state.auditEvents.unshift(event);
+        if (state.auditEvents.length > state.maxAuditEvents) {
+            state.auditEvents.pop();
+        }
+        renderAuditTable();
+    }
+
+    function renderAuditTable() {
+        const tbody = document.getElementById('auditBody');
+        const count = state.auditEvents.length;
+
+        document.getElementById('auditCount').textContent = count + ' event' + (count !== 1 ? 's' : '');
+
+        if (count === 0) {
+            tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-state-icon">📡</div>Waiting for events...</div></td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = state.auditEvents.slice(0, 50).map((evt, i) => {
+            const ts = evt.timestamp || (evt.data && evt.data.timestamp) || Date.now() / 1000;
+            const eventType = evt.event_type || 'unknown';
+            const data = evt.data || {};
+
+            let details = '';
+            if (data.detections !== undefined) {
+                details = `${data.detections} PII found`;
+                if (data.entity_types && data.entity_types.length) {
+                    details += `: ${data.entity_types.join(', ')}`;
+                }
+            } else if (data.method && data.path) {
+                details = `${data.method} ${data.path}`;
+                if (data.status_code) details += ` → ${data.status_code}`;
+            } else if (data.event_type) {
+                details = JSON.stringify(data).substring(0, 80);
+            } else {
+                details = JSON.stringify(data).substring(0, 80);
+            }
+
+            const isNew = i === 0 ? ' new-row' : '';
+
+            return `<tr class="${isNew}">
+                <td><span style="color: var(--text-dim); font-family: var(--font-mono);">${formatTime(ts)}</span></td>
+                <td><span class="event-type ${eventType}">${eventType}</span></td>
+                <td style="color: var(--text-muted); max-width: 300px; overflow: hidden; text-overflow: ellipsis;" title="${details.replace(/"/g, '&quot;')}">${details}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── SSE Connection ─────────────────────────────────────────────────
+
+    function connectSSE() {
+        const evtSource = new EventSource('/events');
+
+        evtSource.addEventListener('connected', function(e) {
+            state.sseConnected = true;
+            updateConnectionStatus(true);
+            showToast('Live connection established', 'success');
+        });
+
+        evtSource.addEventListener('scrub_test', function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                addAuditEvent(data);
+                loadStats(); // Refresh stats after scrub
+            } catch (err) {}
+        });
+
+        evtSource.addEventListener('request', function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                addAuditEvent(data);
+            } catch (err) {}
+        });
+
+        evtSource.addEventListener('proxy_connect', function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                addAuditEvent(data);
+            } catch (err) {}
+        });
+
+        // Generic catch-all for any event
+        evtSource.onmessage = function(e) {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.event_type) {
+                    addAuditEvent(data);
+                }
+            } catch (err) {}
+        };
+
+        evtSource.onerror = function() {
+            state.sseConnected = false;
+            updateConnectionStatus(false);
+            // EventSource auto-reconnects by default
+        };
+    }
+
+    function updateConnectionStatus(connected) {
+        const badge = document.getElementById('connStatus');
+        const text = document.getElementById('connText');
+        if (connected) {
+            badge.className = 'status-badge online';
+            text.textContent = 'Live';
+        } else {
+            badge.className = 'status-badge offline';
+            text.textContent = 'Reconnecting...';
+        }
+    }
+
+    // ── Presets Browser ────────────────────────────────────────────────
+
+    async function loadPresets() {
+        try {
+            const r = await fetch('/api/presets');
+            if (!r.ok) throw new Error('Presets fetch failed');
+            const d = await r.json();
+            state.presets = d.presets || [];
+            state.filteredPresets = state.presets;
+
+            document.getElementById('presetCount').textContent = state.presets.length + ' presets';
+            document.getElementById('statPresets').textContent = state.presets.length;
+
+            renderPresets();
+        } catch (e) {
+            document.getElementById('presetsGrid').innerHTML =
+                `<div class="empty-state"><div class="empty-state-icon">⚠️</div>Failed to load presets</div>`;
+        }
+    }
+
+    function renderPresets() {
+        const grid = document.getElementById('presetsGrid');
+        const presets = state.filteredPresets;
+
+        if (presets.length === 0) {
+            grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div>No presets match your search</div>`;
+            return;
+        }
+
+        if (state.presetView === 'compact') {
+            grid.style.gridTemplateColumns = '1fr';
+            grid.innerHTML = presets.map(p => {
+                const confPct = Math.round(p.confidence * 100);
+                const confClass = confPct >= 90 ? 'high' : confPct >= 70 ? 'medium' : 'low';
+                return `<div class="preset-card" style="display: flex; align-items: center; gap: 1rem;">
+                    <span class="preset-type" style="flex-shrink: 0;">${p.entity_type}</span>
+                    <span class="preset-name" style="flex: 1;">${p.name}</span>
+                    <div class="confidence-bar"><div class="confidence-fill ${confClass}" style="width: ${confPct}%"></div></div>
+                    <span style="font-size: 0.7rem; color: var(--text-dim); width: 35px; text-align: right;">${confPct}%</span>
+                </div>`;
+            }).join('');
+        } else {
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+            grid.innerHTML = presets.map(p => {
+                const confPct = Math.round(p.confidence * 100);
+                const confClass = confPct >= 90 ? 'high' : confPct >= 70 ? 'medium' : 'low';
+                return `<div class="preset-card">
+                    <div class="preset-name">${p.name}</div>
+                    <div class="preset-meta">
+                        <span class="preset-type">${p.entity_type}</span>
+                        <span>→</span>
+                        <span style="font-family: var(--font-mono); font-size: 0.7rem;">${p.replacement}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem;">
+                        <span style="font-size: 0.7rem; color: var(--text-dim);">confidence</span>
+                        <div class="confidence-bar"><div class="confidence-fill ${confClass}" style="width: ${confPct}%"></div></div>
+                        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600;">${confPct}%</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    window.filterPresets = function() {
+        const q = document.getElementById('presetSearch').value.toLowerCase().trim();
+        if (!q) {
+            state.filteredPresets = state.presets;
+        } else {
+            state.filteredPresets = state.presets.filter(p =>
+                p.name.toLowerCase().includes(q) ||
+                p.entity_type.toLowerCase().includes(q) ||
+                p.replacement.toLowerCase().includes(q)
+            );
+        }
+        renderPresets();
+    };
+
+    window.setPresetView = function(view, evt) {
+        state.presetView = view;
+        document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+        if (evt && evt.target) evt.target.classList.add('active');
+        renderPresets();
+    };
+
+    // ── Keyboard Shortcuts ─────────────────────────────────────────────
+
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter to scrub
+        if (e.ctrlKey && e.key === 'Enter') {
+            const textarea = document.getElementById('scrubInput');
+            if (document.activeElement === textarea) {
+                e.preventDefault();
+                testScrub();
+            }
+        }
+    });
+
+    // ── Init ───────────────────────────────────────────────────────────
+
+    async function init() {
+        updateConnectionStatus(false);
+        await Promise.all([loadStats(), loadPresets()]);
+        connectSSE();
+
+        // Poll stats every 5 seconds as fallback
+        setInterval(loadStats, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+
+</body>
+</html>

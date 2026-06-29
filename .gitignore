@@ -1,0 +1,45 @@
+# Ignore Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Local config (may contain real upstream hosts/keys)
+config.local.yaml
+config.prod.yaml
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+.docker/
+
+# Keep example configs
+!config.yaml
+!tenants/example-tenant.yaml
+PUBLISH_ANONYMOUS.md
