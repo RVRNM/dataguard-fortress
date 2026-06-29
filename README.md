@@ -50,14 +50,36 @@ AI Agent → DataGuard Proxy (localhost:8080) → LLM Provider
 
 ## Quick Start
 
+### Option 1: Install as AI Agent Skill (recommended)
+
+Install the skill for your AI agent with a single command:
+
 ```bash
-# 1. Install
+# Install for all detected agents
+npx dataguard-fortress-skill
+
+# Or install for a specific agent
+npx dataguard-fortress-skill --agent claude
+npx dataguard-fortress-skill --agent codex
+npx dataguard-fortress-skill --agent cursor
+npx dataguard-fortress-skill --agent aider
+npx dataguard-fortress-skill --agent hermes
+```
+
+Supported: Claude Code, OpenAI Codex CLI, Cursor, Aider, Cline, Continue, OpenCode, Hermes Agent.
+
+### Option 2: Install from source
+
+```bash
+# 1. Clone
 git clone https://github.com/RVRNM/dataguard-fortress.git
 cd dataguard-fortress
-pip install -e ".[prod]"
 
-# 2. Start
-dataguard --generate-config config.yaml
+# 2. Install the skill locally
+node skills/dataguard-fortress/install.js --agent all
+```
+
+### Option 3: Run the proxy directly
 dataguard --port 8080
 
 # 3. Redirect your AI agent HTTP_PROXY=http://localhost:8080

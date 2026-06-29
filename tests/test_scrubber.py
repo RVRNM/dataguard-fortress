@@ -14,7 +14,7 @@ try:
 except ImportError:
     # Fallback: define inline if file not present
     TEST_OPENAI_KEY = "sk-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
-    TEST_AWS_KEY = "AKIA1234567890ABCDEF"
+    TEST_AWS_KEY = "AKIAIOSFODNN7EXAMPLE"
     TEST_GITHUB_TOKEN = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdef"
     TEST_STRIPE_KEY = "sk_live_abcdefghijklmnopqrstuvwxyz1234"
 
