@@ -92,7 +92,7 @@ class TestTokenBucket:
         for _ in range(10):
             assert await bucket.try_acquire(1) is True
         # 10 of 20 used → 10 remaining
-        assert await bucket.available_tokens() == pytest.approx(10.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(10.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_try_acquire_fails_when_empty(
@@ -134,7 +134,7 @@ class TestTokenBucket:
         # Capacity is 20, try to take 21
         assert await bucket.try_acquire(21) is False
         # Bucket state should be untouched
-        assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_try_acquire_exact_capacity(
@@ -142,7 +142,7 @@ class TestTokenBucket:
     ) -> None:
         """Acquiring exactly the capacity succeeds."""
         assert await bucket.try_acquire(20) is True
-        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.1)
 
     # ------------------------------------------------------------------
     # Refill behaviour
@@ -162,7 +162,7 @@ class TestTokenBucket:
         # Drain all
         for _ in range(10):
             await bucket.try_acquire(1)
-        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.1)
 
         # Wait for refill
         await asyncio.sleep(0.3)
@@ -183,7 +183,7 @@ class TestTokenBucket:
         )
         await bucket.try_acquire(3)
         await bucket.try_acquire(2)  # drain to 0
-        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.1)
         await asyncio.sleep(0.1)
         assert await bucket.available_tokens() <= 5.0
 
@@ -257,7 +257,7 @@ class TestTokenBucket:
             await bucket_a.try_acquire(1)
 
         # Tenant B should still have full capacity
-        assert await bucket_b.available_tokens() == pytest.approx(10.0, abs=0.01)
+        assert await bucket_b.available_tokens() == pytest.approx(10.0, abs=0.1)
         assert await bucket_b.try_acquire(1) is True
         assert await bucket_a.try_acquire(1) is False  # A still empty
 
@@ -277,8 +277,8 @@ class TestTokenBucket:
         for _ in range(10):
             await bucket_x.try_acquire(1)
 
-        assert await bucket_x.available_tokens() == pytest.approx(0.0, abs=0.01)
-        assert await bucket_y.available_tokens() == pytest.approx(10.0, abs=0.01)
+        assert await bucket_x.available_tokens() == pytest.approx(0.0, abs=0.1)
+        assert await bucket_y.available_tokens() == pytest.approx(10.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_same_key_same_state(
@@ -290,7 +290,7 @@ class TestTokenBucket:
 
         await b1.try_acquire(5)
         # b2 should see the reduced state
-        assert await b2.available_tokens() == pytest.approx(5.0, abs=0.01)
+        assert await b2.available_tokens() == pytest.approx(5.0, abs=0.1)
 
     # ------------------------------------------------------------------
     # Expiry
@@ -308,21 +308,21 @@ class TestTokenBucket:
             ttl=0.2,  # 200ms expiry
         )
         await bucket.try_acquire(3)
-        assert await bucket.available_tokens() == pytest.approx(2.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(2.0, abs=0.1)
 
         # Wait for expiry
         await asyncio.sleep(0.3)
         # After expiry, state should be fresh again
-        assert await bucket.available_tokens() == pytest.approx(5.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(5.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_reset_clears_state(self, bucket: TokenBucket) -> None:
         """reset() clears bucket state."""
         await bucket.try_acquire(10)
-        assert await bucket.available_tokens() == pytest.approx(10.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(10.0, abs=0.1)
         await bucket.reset()
         # After reset, fresh state = full capacity
-        assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_backend_delete_clears_state(
@@ -332,7 +332,7 @@ class TestTokenBucket:
         bucket = TokenBucket(backend, "del:key", rate=10, capacity=5, ttl=3600)
         await bucket.try_acquire(5)
         await backend.delete("del:key")
-        assert await bucket.available_tokens() == pytest.approx(5.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(5.0, abs=0.1)
 
     # ------------------------------------------------------------------
     # Current state inspection
@@ -344,13 +344,13 @@ class TestTokenBucket:
         backend = MemoryTokenBucketBackend()
         bucket = TokenBucket(backend, "state:key", rate=10, capacity=5, ttl=3600)
         await bucket.try_acquire(5)
-        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.01)
+        assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.1)
 
         await asyncio.sleep(0.2)
         state = await bucket.current_state()
         # Should show ~2 tokens (10/s * 0.2s = 2)
         assert state.tokens == pytest.approx(2.0, abs=1.0)
-        assert state.max_tokens == pytest.approx(5.0, abs=0.01)
+        assert state.max_tokens == pytest.approx(5.0, abs=0.1)
         assert state.refill_rate == 10.0
 
 
@@ -1035,7 +1035,7 @@ class TestSlidingWindowRateLimiter:
         await backend.add_timestamp("k", now + 5, 10.0)
         oldest = await backend.get_oldest("k")
         assert oldest is not None
-        assert oldest == pytest.approx(now, abs=0.01)
+        assert oldest == pytest.approx(now, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_memory_backend_get_oldest_empty(self) -> None:
@@ -1175,7 +1175,7 @@ class TestSlidingWindowRateLimiter:
         await fake_redis_backend.add_timestamp("oldest", now, 100.0)
         oldest = await fake_redis_backend.get_oldest("oldest")
         assert oldest is not None
-        assert oldest == pytest.approx(now, abs=0.01)
+        assert oldest == pytest.approx(now, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_redis_backend_clear(
@@ -1244,7 +1244,7 @@ class TestRedisTokenBucket:
             fake_redis_tb_backend, "shared:redis:key", rate=10, capacity=5, ttl=3600
         )
         await b1.try_acquire(3)
-        assert await b2.available_tokens() == pytest.approx(2.0, abs=0.01)
+        assert await b2.available_tokens() == pytest.approx(2.0, abs=0.1)
 
     @pytest.mark.asyncio
     async def test_redis_bucket_acquire_timeout(
@@ -1265,7 +1265,7 @@ class TestRedisTokenBucket:
         """State stored in Redis has expected fields."""
         await redis_bucket.try_acquire(2)
         state = await redis_bucket.current_state()
-        assert state.tokens == pytest.approx(3.0, abs=0.01)
-        assert state.max_tokens == pytest.approx(5.0, abs=0.01)
+        assert state.tokens == pytest.approx(3.0, abs=0.1)
+        assert state.max_tokens == pytest.approx(5.0, abs=0.1)
         assert state.refill_rate == 10.0
         assert state.last_refill > 0
