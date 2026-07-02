@@ -38,38 +38,43 @@ def event_loop():
     loop.close()
 
 
-@pytest_asyncio.fixture
+@ pytest_asyncio.fixture
 async def free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
 
+class MockUpstreamProtocol(asyncio.Protocol):
+    """Concrete protocol class for mock upstream server - Windows-compatible."""
+    
+    def __init__(self):
+        self.transport = None
+    
+    def connection_made(self, transport):
+        self.transport = transport
+    
+    def data_received(self, data):
+        body = b'{"status": "ok", "proxied": true}'
+        response = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: application/json\r\n"
+            b"Content-Length: " + str(len(body)).encode() + b"\r\n"
+            b"\r\n"
+            + body
+        )
+        self.transport.write(response)
+        self.transport.close()
+    
+    def connection_lost(self, exc):
+        pass
+
+
 @pytest_asyncio.fixture
 async def upstream_server(free_port: int) -> AsyncGenerator[tuple[str, int], None]:
-    def protocol_factory():
-        proto = asyncio.Protocol()
-        def connection_made(transport):
-            pass
-        def data_received(data):
-            body = b'{"status": "ok", "proxied": true}'
-            response = (
-                b"HTTP/1.1 200 OK\r\n"
-                b"Content-Type: application/json\r\n"
-                b"Content-Length: "
-                + str(len(body)).encode()
-                + b"\r\n"
-                + b"\r\n"
-                + body
-            )
-            transport.write(response)
-            transport.close()
-        proto.connection_made = connection_made
-        proto.data_received = data_received
-        return proto
-
+    """Start a mock upstream server for testing - Windows-compatible."""
     loop = asyncio.get_event_loop()
-    server = await loop.create_server(protocol_factory, "127.0.0.1", free_port)
+    server = await loop.create_server(MockUpstreamProtocol, "127.0.0.1", free_port)
     await server.start_serving()
     yield ("127.0.0.1", free_port)
     server.close()
