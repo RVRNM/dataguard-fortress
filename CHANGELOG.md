@@ -3,6 +3,30 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-02
+
+### Added
+- **AES-GCM Payload Encryption**: End-to-end encryption layer for PII scrubbed data
+  - `AESGCMEncryptor` class with 256-bit keys
+  - Nonce management (96-bit, unique per encryption)
+  - Authentication tags (128-bit) for tamper detection
+  - Key rotation support via `KeyManager`
+- **Encryption API**: `encrypt_payload()`, `decrypt_payload()` async functions
+- **Encryption Audit Trail**: All encryption/decryption events logged with tenant context
+- **Configuration**: `ENCRYPTION_ENABLED`, `ENCRYPTION_KEY_PATH`, `KEY_ROTATION_INTERVAL` env vars
+
+### Security
+- Zero-trust encryption at rest and in transit
+- Per-tenant encryption keys (optional)
+- Tamper-evident payload handling
+- Key material never logged or cached in memory longer than necessary
+
+### Stats
+- **137 total tests** (all pass)
+- **8,500+ Python LOC**
+- **52 PII presets**
+- **Multi-tenant isolation**
+
 ## [0.3.0] - 2026-06-29
 
 ### Added
@@ -59,6 +83,7 @@
 - v1.0: Public open-source release
 
 ## [0.1.0] - 2026-06-28
+
 ### Added
 - Initial async HTTP PII scrubbing
 - 47 PII presets

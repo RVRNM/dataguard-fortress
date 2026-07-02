@@ -4,7 +4,7 @@ This package provides PII scrubbing, classification, encryption,
 rate limiting, and audit logging for AI agent traffic.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.5.0"
 __author__ = "DataGuard Contributors"
 
 from src.audit import AuditEvent, AuditLogger

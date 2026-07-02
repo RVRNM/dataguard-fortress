@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataguard-fortress"
-version = "0.1.0"
+version = "0.5.0"
 description = "DataGuard Fortress — local privacy proxy and credential protection layer for AI agents."
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -12,16 +12,22 @@ requires-python = ">=3.11"
 authors = [
     { name = "DataGuard Contributors" },
 ]
-keywords = ["privacy", "proxy", "ai-agent", "credentials", "security"]
+keywords = ["privacy", "proxy", "ai-agent", "credentials", "security", "PII", "GDPR", "audit"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
     "Topic :: Software Development :: Libraries",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Typing :: Typed",
 ]
 
 dependencies = [
@@ -49,8 +55,14 @@ dev = [
 [project.scripts]
 dataguard = "src.main:main"
 
-# [project.urls]  — uncomment when public
-# Homepage = "https://github.com/USERNAME/dataguard-fortress"
+[project.urls]
+Homepage = "https://github.com/RVRNM/dataguard-fortress"
+Documentation = "https://github.com/RVRNM/dataguard-fortress#readme"
+Repository = "https://github.com/RVRNM/dataguard-fortress"
+Issues = "https://github.com/RVRNM/dataguard-fortress/issues"
+Changelog = "https://github.com/RVRNM/dataguard-fortress/blob/main/CHANGELOG.md"
+Security = "https://github.com/RVRNM/dataguard-fortress/security"
+CSRs = "https://github.com/RVRNM/dataguard-fortress/security/policy"
 
 [tool.setuptools.packages.find]
 where = ["."]
