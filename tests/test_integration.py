@@ -38,7 +38,7 @@ def event_loop():
     loop.close()
 
 
-@ pytest_asyncio.fixture
+@pytest_asyncio.fixture
 async def free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -141,7 +141,70 @@ class TestEndToEnd:
             await server.stop()
 
     @pytest.mark.asyncio
-    async def test_proxy_returns_502_on_unreachable_upstream(
+    async def test_proxy_returns_502_on_upstream_failure(
+        self, free_port: int
+    ) -> None:
+        config = Config(
+            scrubber=ScrubberConfig(enabled=True, min_confidence=0.0),
+            audit=AuditConfig(enabled=False),
+            upstreams=UpstreamsConfig(
+                default="test",
+                providers=[
+                    UpstreamProvider(
+                        name="test",
+                        base_url=f"http://127.0.0.1:{free_port + 50}",
+                    )
+                ],
+            ),
+            proxy=ProxyServerConfig(
+                host="127.0.0.1",
+                port=0,  # Let OS assign a free port
+                connect_timeout=1.0,
+                read_timeout=2.0,
+            ),
+        )
+
+        server = AsyncProxyServer(config=config)
+        await server.start()
+
+        # Get the actual port assigned by the OS
+        actual_port = None
+        if server._server and server._server.sockets:
+            # Get the first socket (assuming TCP)
+            sock = server._server.sockets[0]
+            actual_port = sock.getsockname()[1]
+        else:
+            # Fallback to configured port (should not happen with port=0)
+            actual_port = config.proxy.port
+
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection("127.0.0.1", actual_port),
+                timeout=5.0,
+            )
+
+            request = (
+                f"GET http://127.0.0.1:{free_port + 50}/test HTTP/1.1\r\n"
+                f"Host: 127.0.0.1:{free_port + 50}\r\n"
+                f"Content-Length: 0\r\n"
+                f"\r\n"
+            ).encode()
+
+            writer.write(request)
+            await writer.drain()
+
+            response = await asyncio.wait_for(reader.read(4096), timeout=10.0)
+            response_str = response.decode("utf-8", errors="replace")
+
+            assert "502" in response_str or "504" in response_str
+
+            writer.close()
+            await writer.wait_closed()
+        finally:
+            await server.stop()
+
+    @pytest.mark.asyncio
+    async def test_proxy_returns_502_on_upstream_failure_port(
         self, free_port: int
     ) -> None:
         config = Config(
