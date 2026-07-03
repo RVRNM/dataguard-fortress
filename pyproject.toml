@@ -51,6 +51,8 @@ dev = [
     "pip-audit>=2.7",
     "bandit>=1.7",
     "fakeredis>=2.20",
+    "build>=1.0",
+    "twine>=5.0",
 ]
 
 [project.scripts]
