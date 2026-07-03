@@ -8,7 +8,7 @@ Provides end-to-end encryption for PII scrubbed data with:
 - Key rotation support
 
 Usage:
-    from dataguard.encryption import encrypt_payload, decrypt_payload
+    from .encryption import encrypt_payload, decrypt_payload
     
     encrypted = await encrypt_payload(b"sensitive data", tenant_id="acme")
     decrypted = await decrypt_payload(encrypted, tenant_id="acme")
@@ -16,10 +16,10 @@ Usage:
 
 from __future__ import annotations
 
-from dataguard.encryption.aes_gcm import AESGCMEncryptor
-from dataguard.encryption.key_manager import KeyManager
+from .aes_gcm import AESGCMEncryptor
+from .key_manager import DecryptionError, EncryptionError, KeyManager
 
-__all__ = ["AESGCMEncryptor", "KeyManager", "encrypt_payload", "decrypt_payload"]
+__all__ = ["AESGCMEncryptor", "KeyManager", "EncryptionError", "DecryptionError", "encrypt_payload", "decrypt_payload"]
 
 # Global instances (initialized lazily)
 _encryptor: AESGCMEncryptor | None = None

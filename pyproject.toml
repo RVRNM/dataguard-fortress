@@ -26,7 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Security",
     "Topic :: Software Development :: Libraries",
-    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Internet :: WWW :: HTTP Servers",
     "Typing :: Typed",
 ]
 
@@ -38,6 +38,7 @@ dependencies = [
     "redis>=5.0",
     "prometheus-client>=0.20",
     "cryptography>=42.0",
+    "aiofiles>=23.0",
 ]
 
 [project.optional-dependencies]
@@ -85,7 +86,7 @@ python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 
-# ── Pytest ───────────────────────────────────────────────────────────────────
+# ── Pytest ─────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

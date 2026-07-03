@@ -1,4 +1,4 @@
-"""Tests for the Proxy Server."""
+"""Tests for the Proxy Server - Windows-compatible version."""
 
 from __future__ import annotations
 
@@ -19,6 +19,34 @@ from src.proxy_server import (
 )
 
 
+class EchoProtocol(asyncio.Protocol):
+    """Echo protocol for testing - properly defined class."""
+    
+    def __init__(self):
+        self.transport = None
+    
+    def connection_made(self, transport):
+        self.transport = transport
+    
+    def data_received(self, data):
+        # Echo back with an HTTP-like response
+        response = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: text/plain\r\n"
+            b"Content-Length: "
+            + str(len(data)).encode()
+            + b"\r\n"
+            + b"X-Proxied: true\r\n"
+            + b"\r\n"
+            + data
+        )
+        transport.write(response)
+        transport.close()
+    
+    def connection_lost(self, exc):
+        pass
+
+
 @pytest_asyncio.fixture
 async def free_port() -> int:
     """Get a free port for testing."""
@@ -30,35 +58,8 @@ async def free_port() -> int:
 @pytest_asyncio.fixture
 async def echo_server(free_port: int) -> AsyncGenerator[tuple[str, int], None]:
     """Start a simple echo server for testing proxy connections."""
-    connections: list[asyncio.Transport] = []
-
-    def protocol_factory():
-        proto = asyncio.Protocol()
-
-        def connection_made(transport):
-            connections.append(transport)
-
-        def data_received(data):
-            # Echo back with an HTTP-like response
-            response = (
-                b"HTTP/1.1 200 OK\r\n"
-                b"Content-Type: text/plain\r\n"
-                b"Content-Length: "
-                + str(len(data)).encode()
-                + b"\r\n"
-                + b"X-Proxied: true\r\n"
-                + b"\r\n"
-                + data
-            )
-            transport.write(response)
-            transport.close()
-
-        proto.connection_made = connection_made
-        proto.data_received = data_received
-        return proto
-
     loop = asyncio.get_event_loop()
-    server = await loop.create_server(protocol_factory, "127.0.0.1", free_port)
+    server = await loop.create_server(EchoProtocol, "127.0.0.1", free_port)
     await server.start_serving()
 
     yield ("127.0.0.1", free_port)

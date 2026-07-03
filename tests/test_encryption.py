@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from dataguard.encryption import (
+from src.encryption import (
     AESGCMEncryptor,
     DecryptionError,
     EncryptionError,
@@ -277,24 +277,32 @@ class TestEncryptionIntegration:
     @pytest.mark.asyncio
     async def test_encryption_with_audit(self):
         """Test that encryption events can be audited."""
-        from dataguard.audit import AuditLogger, AuditEvent
+        from src.audit import AuditLogger, AuditEvent
+        from types import SimpleNamespace
         
         # Create temp audit log
         with tempfile.TemporaryDirectory() as tmpdir:
             audit_path = Path(tmpdir) / "audit.log"
-            logger = AuditLogger(str(audit_path))
+            config = SimpleNamespace()
+            config.enabled = True
+            config.log_dir = str(tmpdir)
+            config.log_filename = audit_path.name
+            config.max_size_mb = 100
+            config.buffer_size = 100
+            config.flush_interval_seconds = 1.0
+            config.redact_in_log = True
+            logger = AuditLogger(config)
             
             # Log encryption event
             event = AuditEvent(
                 event_type="encryption_applied",
-                tenant_id="test-tenant",
-                details={"algorithm": "AES-GCM-256"},
+                extra={"algorithm": "AES-GCM-256", "tenant_id": "test-tenant"},
             )
             await logger.log(event)
+            await logger.aclose()  # Flush buffer to file
             
             # Verify log written
             assert audit_path.exists()
-            await logger.aclose()
     
     @pytest.mark.asyncio
     async def test_encrypt_decrypt_performance(self):

@@ -16,7 +16,7 @@ from typing import Any
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from dataguard.encryption.key_manager import (
+from .key_manager import (
     DecryptionError,
     EncryptionError,
     KeyManager,
@@ -73,7 +73,7 @@ class AESGCMEncryptor:
         Returns:
             bytes: nonce_header + ciphertext + tag
                 Format: [4-byte version][12-byte nonce][ciphertext][16-byte tag]
-                
+            
         Raises:
             EncryptionError: If encryption fails
         """
@@ -171,3 +171,4 @@ class AESGCMEncryptor:
         """Close and cleanup resources."""
         await self.flush_nonce_cache()
         self._key_manager.clear_all_keys()
+

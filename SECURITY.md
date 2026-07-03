@@ -4,9 +4,10 @@
 
 | Version | Supported |
 |---------|-----------|
+| 0.5.x   | ✅ |
+| 0.4.x   | ✅ |
 | 0.3.x   | ✅ |
-| 0.2.x   | ✅ |
-| < 0.2   | ❌ |
+| < 0.3   | ❌ |
 
 ## Reporting a Vulnerability
 
@@ -16,19 +17,19 @@ We acknowledge reports within 48 hours and provide a fix timeline within 7 days.
 
 ## Known Security Findings
 
-### SkillSpector Scan Results (2026-06-29)
+### SkillSpector Scan Results (2026-07-03)
 
 | Finding | Severity | Status | Notes |
 |---------|----------|--------|-------|
-| Session Persistence (asyncio background tasks) | MEDIUM | � Benign | Required for tenant hot-reload; configurable |
+| Session Persistence (asyncio background tasks) | MEDIUM | 🟢 Benign | Required for tenant hot-reload; configurable |
 | Context Window Stuffing (HTML) | MEDIUM | 🟢 Benign | Static UI text, no user input injection |
-| Tool Parameter Abuse | HIGH | � **Fixed** | `getattr(logging, ...)` replaced by `logging.getLevelName()` |
-| Dynamic Import (`__import__`) | MEDIUM | 🟢 **Fixed** | Replaced by static `from ... import ...` |
+| Tool Parameter Abuse | HIGH | ✅ Fixed | `getattr(logging, ...)` replaced by `logging.getLevelName()` |
+| Dynamic Import (`__import__`) | MEDIUM | 🟢 Fixed | Replaced by static `from ... import ...` |
 
 ### Data Handling
 
 - **All PII scrubbing is local** — no data leaves your network
-- **Audit logs stay on your disk external telemetry
+- **Audit logs stay on your disk** — external telemetry
 - **No external network calls** in the proxy itself
 - **Encryption keys** should be provided via environment variables only
 - **Tenant isolation**: per-tenant configs with separate rate limits, scrubbers, and upstreams

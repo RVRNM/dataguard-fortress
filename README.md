@@ -1,16 +1,17 @@
 <div align="center">
 
 # 🛡️ DataGuard Fortress
-
 **Self-hosted privacy proxy for AI agents — scrub PII inline, classify sensitivity, rate-limit per tenant, and audit every request.**
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-137%20passed-brightgreen.svg)](tests/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docker-compose.yml)
-[![PII Presets](https://img.shields.io/badge/PII%20presets-52-orange.svg)](src/scrubber.py)
+[![CI](https://github.com/RVRNM/dataguard-fortress/actions/workflows/ci.yml/badge.svg)](https://github.com/RVRNM/dataguard-fortress/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/RVRNM/dataguard-fortress/branch/main/graph/badge.svg)](https://codecov.io/gh/RVRNM/dataguard-fortress)
 [![Security](https://img.shields.io/badge/security-0%20HIGH%20vulns-success.svg)](SECURITY.md)
 [![GDPR](https://img.shields.io/badge/GDPR-compliant-9items-blueviolet.svg)](#gdpr--compliance)
+[![Release](https://img.shields.io/badge/release-v0.5.0-orange.svg)](https://github.com/RVRNM/dataguard-fortress/releases)
 
 </div>
 
@@ -86,6 +87,8 @@ node skills/dataguard-fortress/install.js --agent all
 ```
 
 ### Option 3: Run the proxy directly
+
+```bash
 dataguard --port 8080
 
 # 3. Redirect your AI agent HTTP_PROXY=http://localhost:8080
@@ -96,11 +99,12 @@ curl -x http://localhost:8080 http://httpbin.org/get
 ```
 
 ### Docker (recommended)
+
 ```bash
 docker-compose up -d --build
 ```
 
-## What Gets Scrapped
+## What Gets Scrubbed
 
 | Category | Examples | Presets |
 |----------|----------|---------|
@@ -187,6 +191,16 @@ Visit `http://localhost:8080/` after startup:
 - ✅ **137/137 tests** passing
 - ✅ **Non-root** Docker container
 - ✅ **Zero external network calls**
+
+## CI/CD Pipeline
+
+| Stage | Description |
+|-------|-------------|
+| **Lint** | ruff check, ruff format, mypy |
+| **Test** | pytest with 95% coverage minimum |
+| **Security** | pip-audit + bandit scan |
+| **Build** | Build and verify wheel package |
+| **Publish** | PyPI deployment on main branch |
 
 ## Roadmap
 
