@@ -21,28 +21,23 @@ from src.proxy_server import (
 
 class EchoProtocol(asyncio.Protocol):
     """Echo protocol for testing - properly defined class."""
-    
+
     def __init__(self):
         self.transport = None
-    
+
     def connection_made(self, transport):
         self.transport = transport
-    
+
     def data_received(self, data):
         # Echo back with an HTTP-like response
         response = (
             b"HTTP/1.1 200 OK\r\n"
             b"Content-Type: text/plain\r\n"
-            b"Content-Length: "
-            + str(len(data)).encode()
-            + b"\r\n"
-            + b"X-Proxied: true\r\n"
-            + b"\r\n"
-            + data
+            b"Content-Length: " + str(len(data)).encode() + b"\r\n" + b"X-Proxied: true\r\n" + b"\r\n" + data
         )
-        transport.write(response)
-        transport.close()
-    
+        self.transport.write(response)
+        self.transport.close()
+
     def connection_lost(self, exc):
         pass
 
@@ -142,9 +137,7 @@ class TestAsyncProxyServer:
     """Tests for the AsyncProxyServer."""
 
     @pytest.mark.asyncio
-    async def test_server_starts_and_stops(
-        self, basic_config: Config, echo_server: tuple[str, int]
-    ) -> None:
+    async def test_server_starts_and_stops(self, basic_config: Config, echo_server: tuple[str, int]) -> None:
         """Server can be started and stopped cleanly."""
         server = AsyncProxyServer(config=basic_config)
         await server.start()
@@ -200,6 +193,7 @@ class TestAuditLogger:
     async def test_log_event(self, tmp_path) -> None:
         """Audit events are written to disk."""
         from src.config import AuditConfig
+
         config = AuditConfig(
             enabled=True,
             log_dir=str(tmp_path / "audit"),
@@ -226,6 +220,7 @@ class TestAuditLogger:
     async def test_stats(self, tmp_path) -> None:
         """Stats report buffer state correctly."""
         from src.config import AuditConfig
+
         config = AuditConfig(
             enabled=True,
             log_dir=str(tmp_path / "audit"),
@@ -252,8 +247,10 @@ class TestGracefulShutdown:
     async def test_windows_adapter_init(self) -> None:
         """WindowsServiceAdapter can be initialized."""
         from src.proxy_server import WindowsServiceAdapter
+
         async def factory():
             pass
+
         adapter = WindowsServiceAdapter(factory)
         assert adapter._running is False
         adapter.stop_service()
@@ -271,6 +268,7 @@ class TestConfigValidation:
 
     def test_config_from_yaml(self, tmp_path) -> None:
         import yaml
+
         config_dict = {
             "proxy": {"port": 9999, "host": "127.0.0.1"},
             "scrubber": {"enabled": False},
@@ -280,6 +278,7 @@ class TestConfigValidation:
             yaml.dump(config_dict, f)
 
         from src.config import load_config
+
         config = load_config(path)
         assert config.proxy.port == 9999
         assert config.proxy.host == "127.0.0.1"
@@ -287,6 +286,7 @@ class TestConfigValidation:
 
     def test_config_env_substitution(self, tmp_path, monkeypatch) -> None:
         import yaml
+
         monkeypatch.setenv("TEST_PROXY_PORT", "7777")
         config_dict = {
             "proxy": {"port": "${TEST_PROXY_PORT}"},
@@ -296,12 +296,14 @@ class TestConfigValidation:
             yaml.dump(config_dict, f)
 
         from src.config import load_config
+
         config = load_config(path)
         assert config.proxy.port == 7777
 
     def test_config_env_default(self, tmp_path) -> None:
         """Missing env vars use default value."""
         import yaml
+
         config_dict = {
             "proxy": {"port": "${NONEXISTENT_VAR:42}"},
         }
@@ -310,5 +312,6 @@ class TestConfigValidation:
             yaml.dump(config_dict, f)
 
         from src.config import load_config
+
         config = load_config(path)
         assert config.proxy.port == 42
