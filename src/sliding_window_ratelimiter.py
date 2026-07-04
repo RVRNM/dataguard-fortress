@@ -104,7 +104,8 @@ class RedisRateLimiterBackend(RateLimiterBackend):
     async def get_oldest(self, key: str) -> float | None:
         results = await self._redis.zrange(key, 0, 0, withscores=True)
         if results:
-            return results[0][1]
+            val: float | None = results[0][1]
+            return val
         return None
 
     async def clear(self, key: str) -> None:
@@ -151,7 +152,7 @@ class SlidingWindowRateLimiter:
     def window_seconds(self) -> float:
         return self._window_seconds
 
-    async def check(self, key: str) -> tuple[bool, dict]:
+    async def check(self, key: str) -> tuple[bool, dict[str, Any]]:
         """Check if a new request for *key* is allowed.
 
         Returns:
@@ -177,7 +178,7 @@ class SlidingWindowRateLimiter:
             "reset_at": reset_at,
         }
 
-    async def record(self, key: str) -> tuple[bool, dict]:
+    async def record(self, key: str) -> tuple[bool, dict[str, Any]]:
         """Record a request for *key* and check if it's allowed.
 
         Unlike :meth:`check`, this increments the counter.  Returns the

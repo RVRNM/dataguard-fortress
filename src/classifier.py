@@ -46,7 +46,7 @@ class ClassificationResult:
 # ---------------------------------------------------------------------------
 
 # Classified by sensitivity tier — each word contributes a weight tier.
-_KEYWORDS_CONFIDENTIAL: ClassVar[dict[str, float]] = {
+_KEYWORDS_CONFIDENTIAL: dict[str, float] = {
     "password": 0.9,
     "secret": 0.85,
     "passwd": 0.9,
@@ -63,7 +63,7 @@ _KEYWORDS_CONFIDENTIAL: ClassVar[dict[str, float]] = {
     "bearer": 0.6,
 }
 
-_KEYWORDS_INTERNAL: ClassVar[dict[str, float]] = {
+_KEYWORDS_INTERNAL: dict[str, float] = {
     "internal": 0.4,
     "employee": 0.5,
     "payroll": 0.6,
@@ -75,7 +75,7 @@ _KEYWORDS_INTERNAL: ClassVar[dict[str, float]] = {
     "compensation": 0.5,
 }
 
-_KEYWORDS_RESTRICTED: ClassVar[dict[str, float]] = {
+_KEYWORDS_RESTRICTED: dict[str, float] = {
     "classified": 0.95,
     "top_secret": 1.0,
     "restricted_data": 1.0,
@@ -94,7 +94,7 @@ _KEYWORDS_RESTRICTED: ClassVar[dict[str, float]] = {
 # PII regex patterns (used for density calculation)
 # ---------------------------------------------------------------------------
 
-_PII_PATTERNS: ClassVar[list[tuple[re.Pattern[str], str]]] = [
+_PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # US SSN (with or without dashes)
     (re.compile(r"\b\d{3}-?\d{2}-?\d{4}\b"), "ssn"),
     # Email

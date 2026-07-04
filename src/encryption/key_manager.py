@@ -46,9 +46,9 @@ class KeyManager:
         """Load key from file or generate new one."""
         if self._key_path and self._key_path.exists():
             async with aiofiles.open(self._key_path, "rb") as f:
-                key = await f.read()
-                if len(key) == self.KEY_SIZE:
-                    return key
+                key_bytes: bytes = await f.read()
+                if len(key_bytes) == self.KEY_SIZE:
+                    return key_bytes
 
         # Generate new key
         key = secrets.token_bytes(self.KEY_SIZE)

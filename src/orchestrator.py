@@ -165,7 +165,7 @@ class DataGuardOrchestrator:
             tenant_id = "default"
         return self._tenant_manager.get_tenant(tenant_id)
 
-    async def check_rate_limit(self, tenant_id: str) -> tuple[bool, dict]:
+    async def check_rate_limit(self, tenant_id: str) -> tuple[bool, dict[str, Any]]:
         """Check both token-bucket and sliding-window rate limits for a tenant.
 
         Returns:

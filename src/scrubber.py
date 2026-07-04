@@ -705,10 +705,12 @@ class PIIScrubber:
         """
         if isinstance(data, str):
             try:
-                data = json.loads(data)
+                parsed_data = json.loads(data)
             except json.JSONDecodeError:
                 result = await self.scrub(data)
                 return result.scrubbed_text, result
+            else:
+                data = parsed_data
 
         all_detections: list[Detection] = []
         total_count = 0

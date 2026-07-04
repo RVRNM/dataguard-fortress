@@ -35,7 +35,7 @@ from collections import deque
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 from fastapi import FastAPI, HTTPException
@@ -205,8 +205,8 @@ def get_event_broker() -> EventBroker:
 def create_dashboard(
     config: Config,
     scrubber: PIIScrubber,
-    get_stats: callable | None = None,
-    get_recent_audits: callable | None = None,
+    get_stats: Callable[[], dict[str, Any]] | None = None,
+    get_recent_audits: Callable[[int], list[dict[str, Any]]] | None = None,
     tenant_manager: TenantManager | None = None,
     classifier: DataClassifier | None = None,
     rate_limiter: SlidingWindowRateLimiter | None = None,
@@ -283,7 +283,9 @@ def create_dashboard(
             try:
                 result = get_recent_audits(limit)
                 if asyncio.iscoroutine(result):
-                    return await result
+                    ret: list[dict[str, Any]] = await result
+                    return ret
+                assert isinstance(result, list)
                 return result
             except Exception as exc:
                 logger.warning("External get_recent_audits callback failed: %s", exc)
@@ -776,7 +778,7 @@ def create_dashboard(
     # ── HTML Dashboard ───────────────────────────────────────────────────
 
     @app.get("/", response_class=HTMLResponse)
-    async def index(request: Request):
+    async def index(request: Request) -> HTMLResponse:
         """Serve the main dashboard HTML."""
         return templates.TemplateResponse(request, "index.html")
 

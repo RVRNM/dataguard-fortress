@@ -104,7 +104,7 @@ class TenantManager:
 
     def __init__(
         self,
-        tenants_dir: Path,
+        tenants_dir: str | Path,
         scan_interval: float = 60.0,
         default_tenant: TenantConfig | None = None,
     ) -> None:
@@ -120,7 +120,7 @@ class TenantManager:
         self._default_tenant = default_tenant or DEFAULT_TENANT
         self._tenants: dict[str, TenantConfig] = {}
         self._file_mtimes: dict[str, float] = {}
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task[None] | None = None
         self._running = False
 
         # Load once synchronously so the manager is usable immediately
@@ -238,7 +238,7 @@ class TenantManager:
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: object) -> None:
         await self.stop()
 
     # ------------------------------------------------------------------

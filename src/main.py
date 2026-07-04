@@ -109,7 +109,7 @@ async def run_server(args: argparse.Namespace) -> None:
     # Signal handlers
     asyncio.get_event_loop()
 
-    def _shutdown(signum, frame):
+    def _shutdown(signum: int, frame: object) -> None:
         logging.getLogger("dataguard.main").info(f"Signal {signum} received, shutting down...")
         asyncio.create_task(server.stop())
 
@@ -125,7 +125,9 @@ async def run_server(args: argparse.Namespace) -> None:
     )
 
     try:
-        await server.serve_forever()
+        # Keep running until interrupted
+        stop_event = asyncio.Event()
+        await stop_event.wait()
     except KeyboardInterrupt:
         pass
     finally:
@@ -146,7 +148,7 @@ def setup_logging(level: str = "info") -> None:
     )
 
 
-def main():
+def main() -> None:
     parser = build_argument_parser()
     args = parser.parse_args()
 
