@@ -43,13 +43,19 @@ jobs:
           pip install -e ".[dev]"
       - name: Run tests
         run: |
+          echo "=== test_scrubber.py ==="
+          pytest tests/test_scrubber.py --tb=long -q 2>&1 && echo "PASS: test_scrubber.py" || echo "FAIL: test_scrubber.py"
+          echo "=== test_v03.py ==="
+          pytest tests/test_v03.py --tb=long -q 2>&1 && echo "PASS: test_v03.py" || echo "FAIL: test_v03.py"
+          echo "=== test_proxy.py ==="
+          pytest tests/test_proxy.py --tb=long -q 2>&1 && echo "PASS: test_proxy.py" || echo "FAIL: test_proxy.py"
+          echo "=== test_integration.py ==="
+          pytest tests/test_integration.py --tb=long -q 2>&1 && echo "PASS: test_integration.py" || echo "FAIL: test_integration.py"
+          echo "=== test_encryption.py ==="
+          pytest tests/test_encryption.py --tb=long -q 2>&1 && echo "PASS: test_encryption.py" || echo "FAIL: test_encryption.py"
+      - name: Run all tests (final verification, non-blocking)
+        run: |
           pytest tests/ --tb=long -q 2>&1 || true
-      - name: Upload test logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-logs-${{ matrix.python-version }}
-          path: /tmp/pytest_output.txt
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
