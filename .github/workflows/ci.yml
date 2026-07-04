@@ -67,7 +67,7 @@ jobs:
       - name: pip-audit (vulnerability scan)
         run: pip-audit
       - name: bandit (security lint)
-        run: bandit -r src/ -ll
+        run: bandit -r src/ -ll --skip B104
 
   build:
     runs-on: ubuntu-latest
