@@ -45,10 +45,11 @@ jobs:
         run: |
           pytest tests/ --tb=long -q --cov=src --cov-report=xml --cov-report=term-missing
       - name: Upload coverage to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           files: ./coverage.xml
 
   security:
