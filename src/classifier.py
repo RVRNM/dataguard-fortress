@@ -10,7 +10,6 @@ import asyncio
 import enum
 import re
 from dataclasses import dataclass, field
-from typing import ClassVar
 
 # ---------------------------------------------------------------------------
 # Enums & dataclasses
