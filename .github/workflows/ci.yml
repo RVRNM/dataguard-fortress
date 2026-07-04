@@ -41,25 +41,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Debug environment
-        run: |
-          python --version
-          pip list 2>/dev/null | grep -i -E "pytest|coverage|langsmith" || true
       - name: Run tests
         run: |
-          pytest tests/ --tb=long -q 2>&1
-      - name: Run coverage report
-        if: success()
-        continue-on-error: true
-        run: |
-          coverage run -m pytest tests/ -q --tb=short 2>&1
-          coverage xml
-          coverage report --fail-under=80
-      - name: Upload test logs on failure
-        if: failure()
-        run: |
-          echo "=== pytest output ==="
-          cat ~/.pytest_cache/*/test_results.txt 2>/dev/null || true
+          pytest tests/ --tb=long -q 2>&1 | tee /tmp/pytest_output.txt; exit ${PIPESTATUS[0]}
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.python-version }}
+          path: /tmp/pytest_output.txt
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
