@@ -15,6 +15,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.audit import AuditEvent, AuditEventType, AuditLogger  # noqa: E402
 from src.config import AuditConfig, Config, ProxyServerConfig, ScrubberConfig  # noqa: E402
 from src.scrubber import PIIScrubber  # noqa: E402
+from src.token_bucket import RedisTokenBucketBackend, TokenBucket  # noqa: E402
 
 
 @pytest.fixture
@@ -104,3 +105,15 @@ def sample_audit_event() -> AuditEvent:
         scrub_count=3,
         duration_ms=12.5,
     )
+
+
+@pytest.fixture
+async def redis_bucket():
+    """Provide a TokenBucket backed by fakeredis."""
+    import fakeredis.aioredis
+
+    redis_client = fakeredis.aioredis.FakeRedis()
+    backend = RedisTokenBucketBackend(redis_client)
+    bucket = TokenBucket(backend=backend, key="test-bucket", rate=10.0, capacity=5)
+    yield bucket
+    await redis_client.aclose()
