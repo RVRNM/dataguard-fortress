@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """DataGuard Fortress — FINAL VERIFICATION SCRIPT"""
+
 import asyncio
 import os
+import subprocess
 import sys
 import time
-import subprocess
 from pathlib import Path
 
 # Go to project root and add to path
@@ -15,6 +16,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 pass_count = 0
 fail_count = 0
 
+
 def check(name, passed, detail=""):
     global pass_count, fail_count
     if passed:
@@ -23,6 +25,7 @@ def check(name, passed, detail=""):
     else:
         fail_count += 1
         print(f"  [FAIL] {name}: {detail}")
+
 
 async def main():
     global pass_count, fail_count
@@ -34,15 +37,32 @@ async def main():
     # 1. Structure
     print("\n[1] Project Structure")
     files = [
-        "pyproject.toml", "Dockerfile", "docker-compose.yml", "README.md",
-        "SECURITY.md", "CHANGELOG.md", "LICENSE",
-        "docs/ARCHITECTURE.md", "src/__init__.py", "src/main.py",
-        "src/proxy_server.py", "src/scrubber.py", "src/classifier.py",
-        "src/orchestrator.py", "src/token_bucket.py",
-        "src/sliding_window_ratelimiter.py", "src/tenant.py",
-        "src/dashboard.py", "src/audit.py", "src/config.py",
-        "tests/test_scrubber.py", "tests/test_v03.py", "tests/test_proxy.py",
-        "tests/audit_complet.py", "demo/demo.sh", "MEDIA_KIT.md",
+        "pyproject.toml",
+        "Dockerfile",
+        "docker-compose.yml",
+        "README.md",
+        "SECURITY.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "docs/ARCHITECTURE.md",
+        "src/__init__.py",
+        "src/main.py",
+        "src/proxy_server.py",
+        "src/scrubber.py",
+        "src/classifier.py",
+        "src/orchestrator.py",
+        "src/token_bucket.py",
+        "src/sliding_window_ratelimiter.py",
+        "src/tenant.py",
+        "src/dashboard.py",
+        "src/audit.py",
+        "src/config.py",
+        "tests/test_scrubber.py",
+        "tests/test_v03.py",
+        "tests/test_proxy.py",
+        "tests/audit_complet.py",
+        "demo/demo.sh",
+        "MEDIA_KIT.md",
     ]
     for f in files:
         check(f, os.path.exists(f))
@@ -50,6 +70,7 @@ async def main():
     # 2. PII Scrubbing
     print("\n[2] PII Scrubbing (16 types)")
     from src.scrubber import PIIScrubber
+
     s = PIIScrubber(min_confidence=0.0)
 
     pii_tests = [
@@ -78,6 +99,7 @@ async def main():
     # 3. Classification
     print("\n[3] Classification (4 levels)")
     from src.classifier import DataClassifier, SensitivityLevel
+
     c = DataClassifier()
     for level_name, text, expected in [
         ("PUBLIC", "Hello world", SensitivityLevel.PUBLIC),
@@ -90,7 +112,8 @@ async def main():
 
     # 4. Rate Limiter
     print("\n[4] Rate Limiter")
-    from src.token_bucket import TokenBucket, MemoryTokenBucketBackend
+    from src.token_bucket import MemoryTokenBucketBackend, TokenBucket
+
     backend = MemoryTokenBucketBackend()
     bucket = TokenBucket(backend=backend, key="verify", rate=10.0, capacity=5.0)
     acquired = 0
@@ -99,9 +122,8 @@ async def main():
             acquired += 1
     check("Token bucket burst+block", acquired == 5, f"acquired={acquired}")
 
-    from src.sliding_window_ratelimiter import (
-        SlidingWindowRateLimiter, MemoryRateLimiterBackend
-    )
+    from src.sliding_window_ratelimiter import MemoryRateLimiterBackend, SlidingWindowRateLimiter
+
     sw = SlidingWindowRateLimiter(MemoryRateLimiterBackend(), max_requests=3, window_seconds=60)
     sw_count = 0
     for _ in range(5):
@@ -113,7 +135,8 @@ async def main():
 
     # 5. Audit Logger
     print("\n[5] Audit Logger")
-    from src.audit import AuditLogger, AuditEvent, AuditEventType
+    from src.audit import AuditEvent, AuditEventType, AuditLogger
+
     os.makedirs("./tmp_verify", exist_ok=True)
     alog = AuditLogger()
     alog._log_dir = Path("./tmp_verify")
@@ -138,8 +161,11 @@ async def main():
     print("\n[6] Tenant Manager")
     os.makedirs("./tmp_verify", exist_ok=True)
     with open("./tmp_verify/acme.yaml", "w") as f:
-        f.write("tenant_id: acme\nname: Acme Corp\nrate_limit:\n  requests_per_second: 20.0\n  burst_size: 100\n  max_concurrent: 50\n  window_seconds: 120\n")
+        f.write(
+            "tenant_id: acme\nname: Acme Corp\nrate_limit:\n  requests_per_second: 20.0\n  burst_size: 100\n  max_concurrent: 50\n  window_seconds: 120\n"
+        )
     from src.tenant import TenantManager
+
     tm = TenantManager(tenants_dir="./tmp_verify")
     tm.reload()
     check("Tenants loaded", len(tm.list_tenants()) >= 1, f"tenants={tm.list_tenants()}")
@@ -152,14 +178,19 @@ async def main():
 
     # 7. Orchestrator
     print("\n[7] Orchestrator (full pipeline)")
-    from src.orchestrator import DataGuardOrchestrator, OrchestratorDecision
     from src.config import Config
+    from src.orchestrator import DataGuardOrchestrator
+
     orch = DataGuardOrchestrator(Config())
     await orch.start()
     r = await orch.process_request("default", b"Hello world")
     check("Normal forward", r.forward is True, f"tenant={r.tenant_id}")
     r = await orch.process_request("default", b"SSN: 123-45-6789 CC: 4111-1111-1111-1111 Email: a@b.com")
-    check("PII classified RESTRICTED", r.classification.level == SensitivityLevel.RESTRICTED, f"score={r.classification.score:.2f}")
+    check(
+        "PII classified RESTRICTED",
+        r.classification.level == SensitivityLevel.RESTRICTED,
+        f"score={r.classification.score:.2f}",
+    )
     await orch.stop()
 
     # 8. Performance
@@ -174,8 +205,19 @@ async def main():
     # 9. Pytest
     print("\n[9] Pytest Suite")
     result = subprocess.run(
-        [sys.executable, "-m", "pytest", "tests/test_scrubber.py", "tests/test_v03.py", "tests/test_proxy.py", "-q", "--tb=no"],
-        capture_output=True, text=True, timeout=60
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/test_scrubber.py",
+            "tests/test_v03.py",
+            "tests/test_proxy.py",
+            "-q",
+            "--tb=no",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     pytest_passed = "137 passed" in result.stdout
     check("137 pytest pass", pytest_passed, result.stdout.strip().split("\n")[-1] if result.stdout else "no output")
@@ -194,12 +236,17 @@ async def main():
 
     # Check no real secrets
     import re
+
     secret_hits = []
     for root, dirs, flist in os.walk("src"):
         for f in flist:
             if f.endswith(".py"):
                 for i, line in enumerate(open(os.path.join(root, f), encoding="utf-8", errors="ignore"), 1):
-                    if re.search(r'(sk|ghp|AKIA)_[A-Za-z0-9]{20,}', line) and 'compile' not in line and 'pattern' not in line:
+                    if (
+                        re.search(r"(sk|ghp|AKIA)_[A-Za-z0-9]{20,}", line)
+                        and "compile" not in line
+                        and "pattern" not in line
+                    ):
                         secret_hits.append(f"{f}:{i}")
     check("No real secrets in src/", len(secret_hits) == 0, f"hits={secret_hits}")
 
@@ -214,6 +261,7 @@ async def main():
         print(f"\n  {fail_count} FAILURES — REVIEW ABOVE")
     print("=" * 70)
     return fail_count
+
 
 if __name__ == "__main__":
     fails = asyncio.run(main())

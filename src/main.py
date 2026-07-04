@@ -10,6 +10,7 @@ import signal
 import sys
 
 from src import __version__
+from src.audit import AuditLogger
 from src.config import Config, create_default_config, load_config
 from src.proxy_server import AsyncProxyServer
 from src.scrubber import PIIScrubber
@@ -24,20 +25,23 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--port", "-p",
+        "--port",
+        "-p",
         type=int,
         default=8080,
         choices=[v for v in range(1024, 65536)],  # Valid port range only
         help="Port to listen on (default: 8080)",
     )
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         type=str,
         default="config.yaml",
         help="Path to YAML configuration file (default: config.yaml)",
     )
     parser.add_argument(
-        "--log-level", "-l",
+        "--log-level",
+        "-l",
         type=str,
         default="info",
         choices=["debug", "info", "warning", "error", "critical"],  # Strict allowlist

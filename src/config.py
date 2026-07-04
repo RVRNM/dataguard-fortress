@@ -20,8 +20,10 @@ from pydantic import BaseModel, Field
 
 # ── Pydantic Models for Config Validation ──────────────────────────────────────
 
+
 class ServerConfig(BaseModel):
     """Server configuration."""
+
     host: str = "0.0.0.0"
     port: int = 8000
     workers: int = 4
@@ -34,19 +36,23 @@ class ServerConfig(BaseModel):
 
 class ScrubberConfig(BaseModel):
     """PII scrubber configuration."""
+
     enabled: bool = True
     fail_closed: bool = True
     preserve_format: bool = True
     min_confidence: float = 0.5
-    replacements: dict[str, str] = Field(default_factory=lambda: {
-        "default": "[REDACTED_{TYPE}]",
-        "EMAIL": "[REDACTED_EMAIL]",
-        "PHONE": "[REDACTED_PHONE]",
-    })
+    replacements: dict[str, str] = Field(
+        default_factory=lambda: {
+            "default": "[REDACTED_{TYPE}]",
+            "EMAIL": "[REDACTED_EMAIL]",
+            "PHONE": "[REDACTED_PHONE]",
+        }
+    )
 
 
 class AuditConfig(BaseModel):
     """Audit log configuration."""
+
     enabled: bool = True
     include_request_body: bool = True
     include_response_body: bool = False
@@ -60,6 +66,7 @@ class AuditConfig(BaseModel):
 
 class UpstreamProvider(BaseModel):
     """An upstream LLM provider configuration."""
+
     name: str
     base_url: str
     api_key: str = ""
@@ -68,6 +75,7 @@ class UpstreamProvider(BaseModel):
 
 class UpstreamsConfig(BaseModel):
     """Upstream routing configuration."""
+
     default: str = "openai"
     timeout: int = 60
     max_connections: int = 1000
@@ -77,6 +85,7 @@ class UpstreamsConfig(BaseModel):
 
 class RateLimiterConfig(BaseModel):
     """Rate limiter configuration."""
+
     enabled: bool = True
     backend: str = "memory"
     rate: float = 10.0
@@ -86,6 +95,7 @@ class RateLimiterConfig(BaseModel):
 
 class EncryptorConfig(BaseModel):
     """Encryptor configuration."""
+
     enabled: bool = True
     provider: str = "aes_gcm"
     key_source: str = "env"
@@ -95,6 +105,7 @@ class EncryptorConfig(BaseModel):
 
 class ProxyServerConfig(BaseModel):
     """TCP/HTTP proxy server configuration."""
+
     host: str = "0.0.0.0"
     port: int = 8080
     connect_timeout: float = 10.0
@@ -108,6 +119,7 @@ class ProxyServerConfig(BaseModel):
 
 class Config(BaseModel):
     """Top-level DataGuard Fortress configuration."""
+
     server: ServerConfig = Field(default_factory=ServerConfig)
     scrubber: ScrubberConfig = Field(default_factory=ScrubberConfig)
     audit: AuditConfig = Field(default_factory=AuditConfig)
@@ -116,8 +128,7 @@ class Config(BaseModel):
     encryptor: EncryptorConfig = Field(default_factory=EncryptorConfig)
     proxy: ProxyServerConfig = Field(default_factory=ProxyServerConfig)
 
-    class Config:
-        populate_by_name = True
+    model_config = {"populate_by_name": True}
 
 
 # ── Environment Variable Substitution ─────────────────────────────────────────
@@ -129,12 +140,14 @@ def _substitute_env_vars(data: Any) -> Any:
     """Recursively substitute ${ENV_VAR} strings in a YAML-loaded structure."""
     match data:
         case str():
+
             def replacer(match: re.Match[str]) -> str:
                 env_name = match.group(1)
                 default = ""
                 if ":" in env_name:
                     env_name, default = env_name.split(":", 1)
                 return os.environ.get(env_name, default)
+
             return _ENV_PATTERN.sub(replacer, data)
         case dict():
             return {k: _substitute_env_vars(v) for k, v in data.items()}

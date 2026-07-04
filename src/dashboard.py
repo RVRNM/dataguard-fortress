@@ -163,13 +163,15 @@ def _extract_preset_details(scrubber: PIIScrubber) -> list[dict[str, Any]]:
     """Extract detailed information about all active presets from the scrubber."""
     presets: list[dict[str, Any]] = []
     for preset in scrubber._presets:
-        presets.append({
-            "name": preset.name,
-            "entity_type": preset.entity_type,
-            "replacement": preset.replacement,
-            "confidence": preset.confidence,
-            "pattern": preset.pattern.pattern,
-        })
+        presets.append(
+            {
+                "name": preset.name,
+                "entity_type": preset.entity_type,
+                "replacement": preset.replacement,
+                "confidence": preset.confidence,
+                "pattern": preset.pattern.pattern,
+            }
+        )
     return presets
 
 
@@ -334,11 +336,14 @@ def create_dashboard(
         result: ScrubResult = await scrubber.scrub(text)
 
         # Publish event for live feed
-        await _event_broker.publish("scrub_test", {
-            "original_length": len(text),
-            "detections": len(result.detections),
-            "entity_types": list(set(d.entity_type for d in result.detections)),
-        })
+        await _event_broker.publish(
+            "scrub_test",
+            {
+                "original_length": len(text),
+                "detections": len(result.detections),
+                "entity_types": list(set(d.entity_type for d in result.detections)),
+            },
+        )
 
         return {
             "original_length": len(text),
@@ -426,11 +431,13 @@ def create_dashboard(
         tenants_info: list[dict[str, Any]] = []
         for tid in tenant_ids:
             cfg = tenant_manager.get_tenant(tid)
-            tenants_info.append({
-                "tenant_id": cfg.tenant_id,
-                "name": cfg.name,
-                "enabled": cfg.enabled,
-            })
+            tenants_info.append(
+                {
+                    "tenant_id": cfg.tenant_id,
+                    "name": cfg.name,
+                    "enabled": cfg.enabled,
+                }
+            )
         return {
             "total": len(tenants_info),
             "tenants": tenants_info,
@@ -476,7 +483,7 @@ def create_dashboard(
         try:
             new_config = TenantConfig(**merged)
         except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"Invalid tenant config: {exc}")
+            raise HTTPException(status_code=422, detail=f"Invalid tenant config: {exc}") from exc
 
         # Write to YAML file in the tenants directory
         tenants_dir = tenant_manager.tenants_dir
@@ -488,16 +495,19 @@ def create_dashboard(
             with open(config_path, "w", encoding="utf-8") as fh:
                 yaml.dump(config_dict, fh, default_flow_style=False, sort_keys=False)
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Failed to write tenant config: {exc}")
+            raise HTTPException(status_code=500, detail=f"Failed to write tenant config: {exc}") from exc
 
         # Trigger hot-reload
         tenant_manager.reload()
 
         # Publish event
-        await _event_broker.publish("tenant_updated", {
-            "tenant_id": tenant_id,
-            "action": "update",
-        })
+        await _event_broker.publish(
+            "tenant_updated",
+            {
+                "tenant_id": tenant_id,
+                "action": "update",
+            },
+        )
 
         return {
             "status": "ok",
@@ -527,17 +537,20 @@ def create_dashboard(
                     raise HTTPException(
                         status_code=500,
                         detail=f"Failed to delete tenant file {fpath}: {exc}",
-                    )
+                    ) from exc
 
         # Trigger hot-reload (will purge the in-memory tenant)
         tenant_manager.reload()
 
         # Publish event
-        await _event_broker.publish("tenant_deleted", {
-            "tenant_id": tenant_id,
-            "action": "delete",
-            "removed_files": removed_files,
-        })
+        await _event_broker.publish(
+            "tenant_deleted",
+            {
+                "tenant_id": tenant_id,
+                "action": "delete",
+                "removed_files": removed_files,
+            },
+        )
 
         return {
             "status": "ok",
@@ -567,10 +580,13 @@ def create_dashboard(
         cfg = tenant_manager.get_tenant(tenant_id)
 
         # Publish event
-        await _event_broker.publish("tenant_reloaded", {
-            "tenant_id": tenant_id,
-            "action": "reload",
-        })
+        await _event_broker.publish(
+            "tenant_reloaded",
+            {
+                "tenant_id": tenant_id,
+                "action": "reload",
+            },
+        )
 
         return {
             "status": "ok",
@@ -597,12 +613,15 @@ def create_dashboard(
         result: ClassificationResult = await _classifier.classify(text)
 
         # Publish event
-        await _event_broker.publish("classification", {
-            "level": result.level_name,
-            "score": result.score,
-            "pii_density": result.pii_density,
-            "reasons_count": len(result.reasons),
-        })
+        await _event_broker.publish(
+            "classification",
+            {
+                "level": result.level_name,
+                "score": result.score,
+                "pii_density": result.pii_density,
+                "reasons_count": len(result.reasons),
+            },
+        )
 
         return {
             "level": result.level_name,
@@ -617,11 +636,13 @@ def create_dashboard(
         """List all available sensitivity levels with descriptions."""
         levels = []
         for level in SensitivityLevel:
-            levels.append({
-                "name": level.name,
-                "value": level.value,
-                "description": _SENSITIVITY_DESCRIPTIONS.get(level.name, ""),
-            })
+            levels.append(
+                {
+                    "name": level.name,
+                    "value": level.value,
+                    "description": _SENSITIVITY_DESCRIPTIONS.get(level.name, ""),
+                }
+            )
         return {
             "total": len(levels),
             "levels": levels,
@@ -727,24 +748,23 @@ def create_dashboard(
                     reset_keys.append(f"token_bucket:{tid}")
 
             # Also clear the in-memory backend stores entirely
-            if rate_limiter is not None and isinstance(
-                rate_limiter._backend, MemoryRateLimiterBackend
-            ):
+            if rate_limiter is not None and isinstance(rate_limiter._backend, MemoryRateLimiterBackend):
                 rate_limiter._backend.clear_all()
                 reset_keys.append("sliding_window:all")
 
-            if token_buckets is not None and isinstance(
-                token_buckets._backend, MemoryTokenBucketBackend
-            ):
+            if token_buckets is not None and isinstance(token_buckets._backend, MemoryTokenBucketBackend):
                 token_buckets._backend.clear()
                 token_buckets.clear()
                 reset_keys.append("token_bucket:all")
 
         # Publish event
-        await _event_broker.publish("rate_limits_reset", {
-            "target_tenant": target_tenant or "all",
-            "reset_keys": reset_keys,
-        })
+        await _event_broker.publish(
+            "rate_limits_reset",
+            {
+                "target_tenant": target_tenant or "all",
+                "reset_keys": reset_keys,
+            },
+        )
 
         return {
             "status": "ok",

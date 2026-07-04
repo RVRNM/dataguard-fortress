@@ -34,9 +34,11 @@ logger = logging.getLogger(__name__)
 
 # ── Data Models ──────────────────────────────────────────────────────────────
 
+
 @dataclass
 class ProxyRoute:
     """A route definition for upstream proxying."""
+
     name: str
     host: str
     port: int
@@ -47,6 +49,7 @@ class ProxyRoute:
 @dataclass
 class RequestContext:
     """Context for a single proxied request."""
+
     request_id: str = ""
     client_ip: str = ""
     method: str = ""
@@ -72,6 +75,7 @@ ScrubHook = Callable[[bytes, RequestContext], Awaitable[bytes]]
 
 
 # ── Connection Pool ──────────────────────────────────────────────────────────
+
 
 class ConnectionPool:
     """Async connection pool to upstream servers.
@@ -119,9 +123,7 @@ class ConnectionPool:
 
         # Create new connection
         if use_tls and ssl_ctx:
-            reader, writer = await asyncio.open_connection(
-                host, port, ssl=ssl_ctx
-            )
+            reader, writer = await asyncio.open_connection(host, port, ssl=ssl_ctx)
         else:
             reader, writer = await asyncio.open_connection(host, port)
 
@@ -167,6 +169,7 @@ class ConnectionPool:
 
 # ── Core Proxy Server ────────────────────────────────────────────────────────
 
+
 class AsyncProxyServer:
     """High-performance async TCP proxy with CONNECT tunneling.
 
@@ -181,6 +184,7 @@ class AsyncProxyServer:
         server = AsyncProxyServer(config)
         await server.start()
     """
+
     def __init__(
         self,
         config: Config,
@@ -213,9 +217,7 @@ class AsyncProxyServer:
         )
         self._running = False
         self._active_connections: set[asyncio.Task[None]] = set()
-        self._semaphore = asyncio.Semaphore(
-            self._proxy_config.max_concurrent_connections
-        )
+        self._semaphore = asyncio.Semaphore(self._proxy_config.max_concurrent_connections)
 
         # Route map: path prefix -> ProxyRoute
         self._routes: dict[str, ProxyRoute] = {}
@@ -305,9 +307,7 @@ class AsyncProxyServer:
 
         logger.info("Proxy server shut down complete.")
 
-    async def _handle_client(
-        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-    ) -> None:
+    async def _handle_client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         """Handle an incoming client connection."""
         async with self._semaphore:
             task = asyncio.current_task()
@@ -439,6 +439,7 @@ class AsyncProxyServer:
         ctx: RequestContext,
     ) -> None:
         """Bidirectionally relay bytes between client and upstream."""
+
         async def client_to_upstream() -> None:
             try:
                 while not client_reader.at_eof():
@@ -468,9 +469,7 @@ class AsyncProxyServer:
         u2c = asyncio.create_task(upstream_to_client())
 
         # Wait for either direction to complete
-        done, pending = await asyncio.wait(
-            {c2u, u2c}, return_when=asyncio.FIRST_COMPLETED
-        )
+        done, pending = await asyncio.wait({c2u, u2c}, return_when=asyncio.FIRST_COMPLETED)
 
         # Cancel the other direction
         for task in pending:
@@ -545,9 +544,7 @@ class AsyncProxyServer:
             )
             # Add tenant context headers to forwarded request
             if orchestrator_decision.tenant:
-                tenant_headers = self._orchestrator.get_tenant_headers(
-                    orchestrator_decision.tenant
-                )
+                tenant_headers = self._orchestrator.get_tenant_headers(orchestrator_decision.tenant)
                 for hk, hv in tenant_headers.items():
                     if hk.lower() not in headers:
                         headers[hk.lower()] = hv
@@ -627,9 +624,7 @@ class AsyncProxyServer:
                 status_end = response_data.find(b"\r\n")
                 if status_end != -1:
                     injected = (
-                        response_data[: status_end + 2]
-                        + extra_header.encode("utf-8")
-                        + response_data[status_end + 2 :]
+                        response_data[: status_end + 2] + extra_header.encode("utf-8") + response_data[status_end + 2 :]
                     )
                     writer.write(injected)
                 else:
@@ -752,6 +747,7 @@ class AsyncProxyServer:
 
 # ── Windows Service Wrapper ──────────────────────────────────────────────────
 
+
 class WindowsServiceAdapter:
     """Wrapper to run the proxy as a Windows service.
 
@@ -768,6 +764,7 @@ class WindowsServiceAdapter:
     def run(self) -> None:
         """Start the service (blocking, for SCM)."""
         import asyncio
+
         self._running = True
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

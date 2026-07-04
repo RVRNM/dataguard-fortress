@@ -1,4 +1,5 @@
 """v0.4 Orchestrator E2E test."""
+
 import asyncio
 import os
 import sys
@@ -21,7 +22,10 @@ async def main():
 
     # Test 2: PII-heavy
     r = await orch.process_request("default", b"SSN: 123-45-6789 CC: 4111-1111-1111-1111")
-    print(f"  [2] PII: forward={r.forward}, level={r.classification.level.value}, density={r.classification.pii_density:.2f}")
+    print(
+        f"  [2] PII: forward={r.forward}, level={r.classification.level.value}, "
+        f"density={r.classification.pii_density:.2f}"
+    )
 
     # Test 3: Internal
     r = await orch.process_request("default", b"Internal memo: salary review")

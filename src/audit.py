@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class AuditEventType(StrEnum):
     """Types of audit events."""
+
     REQUEST = "request"
     RESPONSE = "response"
     PROXY_CONNECT = "proxy_connect"
@@ -42,6 +43,7 @@ class AuditEvent:
     This is the core record written to the audit log.
     One JSON object per line in the JSONL file.
     """
+
     timestamp: str = ""
     event_type: str = ""
     request_id: str = ""

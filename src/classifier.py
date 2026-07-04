@@ -16,8 +16,10 @@ from typing import ClassVar
 # Enums & dataclasses
 # ---------------------------------------------------------------------------
 
+
 class SensitivityLevel(enum.IntEnum):
     """Ordered sensitivity levels (higher = more sensitive)."""
+
     PUBLIC = 0
     INTERNAL = 1
     CONFIDENTIAL = 2
@@ -112,6 +114,7 @@ _PII_PATTERNS: ClassVar[list[tuple[re.Pattern[str], str]]] = [
 # Classifier
 # ---------------------------------------------------------------------------
 
+
 class DataClassifier:
     """Classifies request-body text into PUBLIC / INTERNAL / CONFIDENTIAL / RESTRICTED.
 
@@ -173,9 +176,7 @@ class DataClassifier:
         density = match_count / total
         return density, sorted(detected)
 
-    def _keyword_score_and_reasons(
-        self, text_lower: str
-    ) -> tuple[float, SensitivityLevel, list[str]]:
+    def _keyword_score_and_reasons(self, text_lower: str) -> tuple[float, SensitivityLevel, list[str]]:
         """Scan keyword buckets and return (max_score, worst_level, reasons)."""
         reasons: list[str] = []
         worst_level = SensitivityLevel.PUBLIC
@@ -233,9 +234,7 @@ class DataClassifier:
         # Rule: high PII density → clamp to RESTRICTED
         if pii_density > self.pii_density_threshold:
             final_level = SensitivityLevel.RESTRICTED
-            reasons.append(
-                f"pii_density({pii_density:.4f}) > threshold({self.pii_density_threshold})"
-            )
+            reasons.append(f"pii_density({pii_density:.4f}) > threshold({self.pii_density_threshold})")
             reasons.extend(f"pii_detected({t})" for t in pii_types)
 
         # 4. Compute composite score (0-1)

@@ -17,14 +17,14 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.classifier import ClassificationResult, DataClassifier, SensitivityLevel
-from src.sliding_window_ratelimiter import (
+from src.classifier import ClassificationResult, DataClassifier, SensitivityLevel  # noqa: E402
+from src.sliding_window_ratelimiter import (  # noqa: E402
     MemoryRateLimiterBackend,
     RedisRateLimiterBackend,
     SlidingWindowRateLimiter,
 )
-from src.tenant import DEFAULT_TENANT, TenantConfig, TenantManager
-from src.token_bucket import (
+from src.tenant import DEFAULT_TENANT, TenantConfig, TenantManager  # noqa: E402
+from src.token_bucket import (  # noqa: E402
     MemoryTokenBucketBackend,
     RedisTokenBucketBackend,
     TenantTokenBuckets,
@@ -77,17 +77,13 @@ class TestTokenBucket:
     # ------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_try_acquire_initial_success(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_initial_success(self, bucket: TokenBucket) -> None:
         """First acquire on a fresh bucket should succeed."""
         result = await bucket.try_acquire(1)
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_try_acquire_drains_tokens(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_drains_tokens(self, bucket: TokenBucket) -> None:
         """Multiple acquires consume tokens."""
         for _ in range(10):
             assert await bucket.try_acquire(1) is True
@@ -95,9 +91,7 @@ class TestTokenBucket:
         assert await bucket.available_tokens() == pytest.approx(10.0, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_try_acquire_fails_when_empty(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_fails_when_empty(self, bucket: TokenBucket) -> None:
         """When no tokens remain, try_acquire returns False."""
         # Drain all 20 tokens
         for _ in range(20):
@@ -107,9 +101,7 @@ class TestTokenBucket:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_try_acquire_returns_false_not_exception(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_returns_false_not_exception(self, bucket: TokenBucket) -> None:
         """Exceeding capacity returns False, not an exception."""
         for _ in range(20):
             await bucket.try_acquire(1)
@@ -117,9 +109,7 @@ class TestTokenBucket:
         assert await bucket.try_acquire(5) is False
 
     @pytest.mark.asyncio
-    async def test_try_acquire_zero_tokens_always_succeeds(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_zero_tokens_always_succeeds(self, bucket: TokenBucket) -> None:
         """Requesting 0 tokens always succeeds (including on empty bucket)."""
         # Drain bucket
         for _ in range(20):
@@ -127,9 +117,7 @@ class TestTokenBucket:
         assert await bucket.try_acquire(0) is True
 
     @pytest.mark.asyncio
-    async def test_try_acquire_large_burst(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_large_burst(self, bucket: TokenBucket) -> None:
         """Acquiring more than available in one call returns False."""
         # Capacity is 20, try to take 21
         assert await bucket.try_acquire(21) is False
@@ -137,9 +125,7 @@ class TestTokenBucket:
         assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_try_acquire_exact_capacity(
-        self, bucket: TokenBucket
-    ) -> None:
+    async def test_try_acquire_exact_capacity(self, bucket: TokenBucket) -> None:
         """Acquiring exactly the capacity succeeds."""
         assert await bucket.try_acquire(20) is True
         assert await bucket.available_tokens() == pytest.approx(0.0, abs=0.1)
@@ -245,9 +231,7 @@ class TestTokenBucket:
     # ------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_per_tenant_bucket_isolation(
-        self, backend: MemoryTokenBucketBackend
-    ) -> None:
+    async def test_per_tenant_bucket_isolation(self, backend: MemoryTokenBucketBackend) -> None:
         """Different buckets share a backend but don't share state."""
         bucket_a = TokenBucket(backend, "tenant:a", rate=10, capacity=10, ttl=3600)
         bucket_b = TokenBucket(backend, "tenant:b", rate=10, capacity=10, ttl=3600)
@@ -281,9 +265,7 @@ class TestTokenBucket:
         assert await bucket_y.available_tokens() == pytest.approx(10.0, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_same_key_same_state(
-        self, backend: MemoryTokenBucketBackend
-    ) -> None:
+    async def test_same_key_same_state(self, backend: MemoryTokenBucketBackend) -> None:
         """Two TokenBuckets with the same key share state."""
         b1 = TokenBucket(backend, "shared:key", rate=10, capacity=10, ttl=3600)
         b2 = TokenBucket(backend, "shared:key", rate=10, capacity=10, ttl=3600)
@@ -325,9 +307,7 @@ class TestTokenBucket:
         assert await bucket.available_tokens() == pytest.approx(20.0, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_backend_delete_clears_state(
-        self, backend: MemoryTokenBucketBackend
-    ) -> None:
+    async def test_backend_delete_clears_state(self, backend: MemoryTokenBucketBackend) -> None:
         """Deleting from backend removes state entirely."""
         bucket = TokenBucket(backend, "del:key", rate=10, capacity=5, ttl=3600)
         await bucket.try_acquire(5)
@@ -376,9 +356,7 @@ class TestTenantManager:
     # Loading from directory
     # ------------------------------------------------------------------
 
-    def test_load_from_dir_empty(
-        self, tenants_dir: Path, manager: TenantManager
-    ) -> None:
+    def test_load_from_dir_empty(self, tenants_dir: Path, manager: TenantManager) -> None:
         """Empty directory: no tenants loaded."""
         assert manager.list_tenants() == []
         assert len(manager) == 0
@@ -415,9 +393,7 @@ class TestTenantManager:
         assert cfg.rate_limit.requests_per_second == 100.0
         assert cfg.rate_limit.burst_size == 50
 
-    def test_load_from_dir_multiple_tenants(
-        self, manager: TenantManager
-    ) -> None:
+    def test_load_from_dir_multiple_tenants(self, manager: TenantManager) -> None:
         """Multiple YAML files are all loaded."""
         import yaml as _yaml
 
@@ -456,9 +432,7 @@ class TestTenantManager:
         assert "valid" in manager.list_tenants()
         assert "invalid" not in manager.list_tenants()
 
-    def test_load_non_mapping_yaml_skipped(
-        self, manager: TenantManager
-    ) -> None:
+    def test_load_non_mapping_yaml_skipped(self, manager: TenantManager) -> None:
         """YAML files that don't contain a mapping are skipped."""
         with open(manager.tenants_dir / "bad.yml", "w") as f:
             f.write("- item1\n- item2\n")
@@ -470,26 +444,20 @@ class TestTenantManager:
     # Default fallback
     # ------------------------------------------------------------------
 
-    def test_default_fallback_for_unknown_tenant(
-        self, manager: TenantManager
-    ) -> None:
+    def test_default_fallback_for_unknown_tenant(self, manager: TenantManager) -> None:
         """get_tenant() returns a default for unknown tenant IDs."""
         cfg = manager.get_tenant("nonexistent-tenant")
         # Returns default with tenant_id rewritten
         assert cfg.tenant_id == "nonexistent-tenant"
         assert cfg.enabled is True
 
-    def test_default_fallback_has_reasonable_values(
-        self, manager: TenantManager
-    ) -> None:
+    def test_default_fallback_has_reasonable_values(self, manager: TenantManager) -> None:
         """Default tenant has reasonable rate-limit values."""
         cfg = manager.get_tenant("missing")
         assert cfg.rate_limit.requests_per_second == DEFAULT_TENANT.rate_limit.requests_per_second
         assert cfg.rate_limit.burst_size == DEFAULT_TENANT.rate_limit.burst_size
 
-    def test_default_fallback_custom_instance(
-        self, tenants_dir: Path
-    ) -> None:
+    def test_default_fallback_custom_instance(self, tenants_dir: Path) -> None:
         """A custom default tenant can be provided."""
         from src.tenant import TenantRateLimit as TRateLimit
 
@@ -584,9 +552,7 @@ class TestTenantManager:
     # ------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_watcher_starts_and_stops(
-        self, tenants_dir: Path
-    ) -> None:
+    async def test_watcher_starts_and_stops(self, tenants_dir: Path) -> None:
         """Watcher start/stop lifecycle works."""
         mgr = TenantManager(tenants_dir, scan_interval=1.0)
         assert mgr.is_watching is False
@@ -608,9 +574,7 @@ class TestTenantManager:
         assert mgr.is_watching is False
 
     @pytest.mark.asyncio
-    async def test_watcher_periodically_reloads(
-        self, tenants_dir: Path
-    ) -> None:
+    async def test_watcher_periodically_reloads(self, tenants_dir: Path) -> None:
         """Watcher reloads tenants at the configured interval."""
         import yaml as _yaml
 
@@ -727,11 +691,7 @@ class TestDataClassifier:
         """High PII density clamps classification to RESTRICTED."""
         cls = DataClassifier(pii_density_threshold=0.05)  # low threshold
         # Many PII matches in a short text
-        text = (
-            "emails: a@b.com c@d.com e@f.com "
-            "phones: 555-111-2222 555-333-4444 "
-            "ssn: 123-45-6789"
-        )
+        text = "emails: a@b.com c@d.com e@f.com phones: 555-111-2222 555-333-4444 ssn: 123-45-6789"
         result = await cls.classify(text)
         # Should be RESTRICTED due to high density
         assert result.level == SensitivityLevel.RESTRICTED
@@ -812,9 +772,7 @@ class TestDataClassifier:
         assert r1.level == r2.level
 
     @pytest.mark.asyncio
-    async def test_multiple_keyword_levels_wins_highest(
-        self, classifier: DataClassifier
-    ) -> None:
+    async def test_multiple_keyword_levels_wins_highest(self, classifier: DataClassifier) -> None:
         """When multiple levels match, the highest wins."""
         # Has both internal ('employee') and confidential ('api_key')
         result = await classifier.classify("The employee leaked the api_key")
@@ -857,31 +815,23 @@ class TestSlidingWindowRateLimiter:
             window_seconds=1.0,
         )
 
-    def test_init_invalid_max_requests(
-        self, memory_backend: MemoryRateLimiterBackend
-    ) -> None:
+    def test_init_invalid_max_requests(self, memory_backend: MemoryRateLimiterBackend) -> None:
         """max_requests < 1 raises ValueError."""
         with pytest.raises(ValueError, match="max_requests must be >= 1"):
             SlidingWindowRateLimiter(memory_backend, max_requests=0, window_seconds=1.0)
 
-    def test_init_invalid_window(
-        self, memory_backend: MemoryRateLimiterBackend
-    ) -> None:
+    def test_init_invalid_window(self, memory_backend: MemoryRateLimiterBackend) -> None:
         """window_seconds <= 0 raises ValueError."""
         with pytest.raises(ValueError, match="window_seconds must be positive"):
             SlidingWindowRateLimiter(memory_backend, max_requests=10, window_seconds=0)
 
-    def test_init_negative_window(
-        self, memory_backend: MemoryRateLimiterBackend
-    ) -> None:
+    def test_init_negative_window(self, memory_backend: MemoryRateLimiterBackend) -> None:
         """Negative window_seconds raises ValueError."""
         with pytest.raises(ValueError, match="window_seconds must be positive"):
             SlidingWindowRateLimiter(memory_backend, max_requests=10, window_seconds=-5)
 
     @pytest.mark.asyncio
-    async def test_first_request_allowed(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_first_request_allowed(self, limiter: SlidingWindowRateLimiter) -> None:
         """First request is always allowed."""
         allowed, info = await limiter.record("user1")
         assert allowed is True
@@ -889,19 +839,15 @@ class TestSlidingWindowRateLimiter:
         assert info["remaining"] == 4
 
     @pytest.mark.asyncio
-    async def test_up_to_limit_allowed(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_up_to_limit_allowed(self, limiter: SlidingWindowRateLimiter) -> None:
         """All requests up to max_requests are allowed."""
         for i in range(5):
             allowed, info = await limiter.record("user1")
-            assert allowed is True, f"Request {i+1} should be allowed"
+            assert allowed is True, f"Request {i + 1} should be allowed"
             assert info["current_count"] == i + 1
 
     @pytest.mark.asyncio
-    async def test_over_limit_rejected(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_over_limit_rejected(self, limiter: SlidingWindowRateLimiter) -> None:
         """Request beyond max_requests is rejected."""
         for _ in range(5):
             await limiter.record("user1")
@@ -911,9 +857,7 @@ class TestSlidingWindowRateLimiter:
         assert info["current_count"] == 6
 
     @pytest.mark.asyncio
-    async def test_remaining_decreases(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_remaining_decreases(self, limiter: SlidingWindowRateLimiter) -> None:
         """remaining() decreases as requests are recorded."""
         assert await limiter.remaining("user1") == 5
         await limiter.record("user1")
@@ -922,9 +866,7 @@ class TestSlidingWindowRateLimiter:
         assert await limiter.remaining("user1") == 3
 
     @pytest.mark.asyncio
-    async def test_check_does_not_record(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_check_does_not_record(self, limiter: SlidingWindowRateLimiter) -> None:
         """check() does NOT record a request."""
         for _ in range(10):
             allowed, info = await limiter.check("user1")
@@ -932,9 +874,7 @@ class TestSlidingWindowRateLimiter:
             assert info["current_count"] == 0
 
     @pytest.mark.asyncio
-    async def test_per_key_isolation(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_per_key_isolation(self, limiter: SlidingWindowRateLimiter) -> None:
         """Different keys are tracked independently."""
         for _ in range(5):
             await limiter.record("user1")
@@ -951,9 +891,7 @@ class TestSlidingWindowRateLimiter:
     async def test_window_expires_old_entries(self) -> None:
         """Old entries outside the window are purged."""
         backend = MemoryRateLimiterBackend()
-        limiter = SlidingWindowRateLimiter(
-            backend=backend, max_requests=2, window_seconds=0.3
-        )
+        limiter = SlidingWindowRateLimiter(backend=backend, max_requests=2, window_seconds=0.3)
 
         # Fill up
         await limiter.record("key")
@@ -970,9 +908,7 @@ class TestSlidingWindowRateLimiter:
         assert info["current_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_reset_clears_state(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_reset_clears_state(self, limiter: SlidingWindowRateLimiter) -> None:
         """reset() clears all state for a key."""
         for _ in range(5):
             await limiter.record("user1")
@@ -985,9 +921,7 @@ class TestSlidingWindowRateLimiter:
         assert info["current_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_info_dict_has_reset_at(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_info_dict_has_reset_at(self, limiter: SlidingWindowRateLimiter) -> None:
         """Info dict includes reset_at timestamp."""
         allowed, info = await limiter.record("user1")
         assert "reset_at" in info
@@ -995,9 +929,7 @@ class TestSlidingWindowRateLimiter:
         assert info["reset_at"] <= time.monotonic() + 1.0  # window is 1s
 
     @pytest.mark.asyncio
-    async def test_info_dict_has_limit(
-        self, limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_info_dict_has_limit(self, limiter: SlidingWindowRateLimiter) -> None:
         """Info dict includes the configured limit."""
         _, info = await limiter.record("user1")
         assert info["limit"] == 5
@@ -1075,9 +1007,7 @@ class TestSlidingWindowRateLimiter:
         return RedisRateLimiterBackend(client)
 
     @pytest.fixture
-    def redis_limiter(
-        self, fake_redis_backend: RedisRateLimiterBackend
-    ) -> SlidingWindowRateLimiter:
+    def redis_limiter(self, fake_redis_backend: RedisRateLimiterBackend) -> SlidingWindowRateLimiter:
         return SlidingWindowRateLimiter(
             backend=fake_redis_backend,
             max_requests=3,
@@ -1085,18 +1015,14 @@ class TestSlidingWindowRateLimiter:
         )
 
     @pytest.mark.asyncio
-    async def test_redis_first_request_allowed(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_first_request_allowed(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """First request via Redis backend is allowed."""
         allowed, info = await redis_limiter.record("redis-user")
         assert allowed is True
         assert info["current_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_redis_rate_limit_enforced(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_rate_limit_enforced(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """Redis backend enforces rate limit."""
         for _ in range(3):
             allowed, _ = await redis_limiter.record("redis-user")
@@ -1106,9 +1032,7 @@ class TestSlidingWindowRateLimiter:
         assert info["remaining"] == 0
 
     @pytest.mark.asyncio
-    async def test_redis_per_key_isolation(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_per_key_isolation(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """Redis backend tracks keys independently."""
         for _ in range(3):
             await redis_limiter.record("key-A")
@@ -1120,27 +1044,21 @@ class TestSlidingWindowRateLimiter:
         assert info["current_count"] == 1
 
     @pytest.mark.asyncio
-    async def test_redis_check_does_not_record(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_check_does_not_record(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """check() via Redis does NOT record."""
         allowed, info = await redis_limiter.check("check-key")
         assert allowed is True
         assert info["current_count"] == 0
 
     @pytest.mark.asyncio
-    async def test_redis_remaining(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_remaining(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """remaining() via Redis returns correct quota."""
         assert await redis_limiter.remaining("r-key") == 3
         await redis_limiter.record("r-key")
         assert await redis_limiter.remaining("r-key") == 2
 
     @pytest.mark.asyncio
-    async def test_redis_reset(
-        self, redis_limiter: SlidingWindowRateLimiter
-    ) -> None:
+    async def test_redis_reset(self, redis_limiter: SlidingWindowRateLimiter) -> None:
         """reset() via Redis clears state."""
         for _ in range(3):
             await redis_limiter.record("reset-key")
@@ -1155,9 +1073,7 @@ class TestSlidingWindowRateLimiter:
     # ------------------------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_redis_backend_add_and_count(
-        self, fake_redis_backend: RedisRateLimiterBackend
-    ) -> None:
+    async def test_redis_backend_add_and_count(self, fake_redis_backend: RedisRateLimiterBackend) -> None:
         """Redis backend stores and counts timestamps."""
         now = time.monotonic()
         await fake_redis_backend.add_timestamp("zkey", now, 10.0)
@@ -1166,9 +1082,7 @@ class TestSlidingWindowRateLimiter:
         assert count == 2
 
     @pytest.mark.asyncio
-    async def test_redis_backend_get_oldest(
-        self, fake_redis_backend: RedisRateLimiterBackend
-    ) -> None:
+    async def test_redis_backend_get_oldest(self, fake_redis_backend: RedisRateLimiterBackend) -> None:
         """Redis backend returns oldest timestamp."""
         now = time.monotonic()
         await fake_redis_backend.add_timestamp("oldest", now + 5, 100.0)
@@ -1178,9 +1092,7 @@ class TestSlidingWindowRateLimiter:
         assert oldest == pytest.approx(now, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_redis_backend_clear(
-        self, fake_redis_backend: RedisRateLimiterBackend
-    ) -> None:
+    async def test_redis_backend_clear(self, fake_redis_backend: RedisRateLimiterBackend) -> None:
         """Redis backend clear removes the key."""
         await fake_redis_backend.add_timestamp("cx", time.monotonic(), 10.0)
         await fake_redis_backend.clear("cx")
@@ -1204,9 +1116,7 @@ class TestRedisTokenBucket:
         return RedisTokenBucketBackend(client)
 
     @pytest.fixture
-    def redis_bucket(
-        self, fake_redis_tb_backend: RedisTokenBucketBackend
-    ) -> TokenBucket:
+    def redis_bucket(self, fake_redis_tb_backend: RedisTokenBucketBackend) -> TokenBucket:
         return TokenBucket(
             backend=fake_redis_tb_backend,
             key="redis:bucket:test",
@@ -1216,52 +1126,36 @@ class TestRedisTokenBucket:
         )
 
     @pytest.mark.asyncio
-    async def test_redis_bucket_try_acquire(
-        self, redis_bucket: TokenBucket
-    ) -> None:
+    async def test_redis_bucket_try_acquire(self, redis_bucket: TokenBucket) -> None:
         """try_acquire works with Redis backend."""
         assert await redis_bucket.try_acquire(1) is True
         assert await redis_bucket.try_acquire(1) is True
 
     @pytest.mark.asyncio
-    async def test_redis_bucket_exhaustion(
-        self, redis_bucket: TokenBucket
-    ) -> None:
+    async def test_redis_bucket_exhaustion(self, redis_bucket: TokenBucket) -> None:
         """Redis bucket respects capacity."""
         for _ in range(5):
             assert await redis_bucket.try_acquire(1) is True
         assert await redis_bucket.try_acquire(1) is False
 
     @pytest.mark.asyncio
-    async def test_redis_bucket_shared_state(
-        self, fake_redis_tb_backend: RedisTokenBucketBackend
-    ) -> None:
+    async def test_redis_bucket_shared_state(self, fake_redis_tb_backend: RedisTokenBucketBackend) -> None:
         """Two buckets with same key share Redis state."""
-        b1 = TokenBucket(
-            fake_redis_tb_backend, "shared:redis:key", rate=10, capacity=5, ttl=3600
-        )
-        b2 = TokenBucket(
-            fake_redis_tb_backend, "shared:redis:key", rate=10, capacity=5, ttl=3600
-        )
+        b1 = TokenBucket(fake_redis_tb_backend, "shared:redis:key", rate=10, capacity=5, ttl=3600)
+        b2 = TokenBucket(fake_redis_tb_backend, "shared:redis:key", rate=10, capacity=5, ttl=3600)
         await b1.try_acquire(3)
         assert await b2.available_tokens() == pytest.approx(2.0, abs=0.1)
 
     @pytest.mark.asyncio
-    async def test_redis_bucket_acquire_timeout(
-        self, fake_redis_tb_backend: RedisTokenBucketBackend
-    ) -> None:
+    async def test_redis_bucket_acquire_timeout(self, fake_redis_tb_backend: RedisTokenBucketBackend) -> None:
         """acquire() times out on Redis backend."""
-        bucket = TokenBucket(
-            fake_redis_tb_backend, "redis:timeout", rate=1, capacity=1, ttl=3600
-        )
+        bucket = TokenBucket(fake_redis_tb_backend, "redis:timeout", rate=1, capacity=1, ttl=3600)
         await bucket.try_acquire(1)
         result = await bucket.acquire(1, timeout=0.15)
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_redis_bucket_state_fields(
-        self, redis_bucket: TokenBucket
-    ) -> None:
+    async def test_redis_bucket_state_fields(self, redis_bucket: TokenBucket) -> None:
         """State stored in Redis has expected fields."""
         await redis_bucket.try_acquire(2)
         state = await redis_bucket.current_state()

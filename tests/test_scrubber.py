@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import os
+
+# Load test secrets from gitignored file (avoids GitHub Push Protection)
+import sys
+
 import pytest
 
 from src.scrubber import Detection, PatternPreset, PIIScrubber, ScrubResult, _build_presets
 
-# Load test secrets from gitignored file (avoids GitHub Push Protection)
-import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 try:
-    from _test_secrets import *
+    from _test_secrets import *  # noqa: F403
 except ImportError:
     # Fallback: define inline if file not present
     TEST_OPENAI_KEY = "sk-abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
@@ -25,9 +28,7 @@ class TestPIIScrubberBasics:
     def test_has_many_presets(self) -> None:
         """Verify we have 50+ presets as required."""
         scrubber = PIIScrubber(min_confidence=0.0)
-        assert scrubber.preset_count >= 50, (
-            f"Expected 50+ presets, got {scrubber.preset_count}"
-        )
+        assert scrubber.preset_count >= 50, f"Expected 50+ presets, got {scrubber.preset_count}"
 
     def test_all_presets_loaded(self) -> None:
         """All presets from _build_presets are loaded when no filter."""
@@ -183,11 +184,7 @@ class TestPIIScrubbing:
     @pytest.mark.asyncio
     async def test_private_key_detection(self, scrubber: PIIScrubber) -> None:
         """PEM private keys are detected."""
-        key_text = (
-            "-----BEGIN RSA PRIVATE KEY-----\n"
-            "MIIEpAIBAAKCAQEA...\n"
-            "-----END RSA PRIVATE KEY-----"
-        )
+        key_text = "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...\n-----END RSA PRIVATE KEY-----"
         result = await scrubber.scrub(key_text)
         assert "[REDACTED_PRIVATE_KEY]" in result.scrubbed_text
 

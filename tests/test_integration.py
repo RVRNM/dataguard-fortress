@@ -47,25 +47,24 @@ async def free_port() -> int:
 
 class MockUpstreamProtocol(asyncio.Protocol):
     """Concrete protocol class for mock upstream server - Windows-compatible."""
-    
+
     def __init__(self):
         self.transport = None
-    
+
     def connection_made(self, transport):
         self.transport = transport
-    
+
     def data_received(self, data):
         body = b'{"status": "ok", "proxied": true}'
         response = (
             b"HTTP/1.1 200 OK\r\n"
             b"Content-Type: application/json\r\n"
             b"Content-Length: " + str(len(body)).encode() + b"\r\n"
-            b"\r\n"
-            + body
+            b"\r\n" + body
         )
         self.transport.write(response)
         self.transport.close()
-    
+
     def connection_lost(self, exc):
         pass
 
@@ -83,9 +82,7 @@ async def upstream_server(free_port: int) -> AsyncGenerator[tuple[str, int], Non
 
 class TestEndToEnd:
     @pytest.mark.asyncio
-    async def test_proxy_forwards_http_request(
-        self, free_port: int, upstream_server: tuple[str, int]
-    ) -> None:
+    async def test_proxy_forwards_http_request(self, free_port: int, upstream_server: tuple[str, int]) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=True, min_confidence=0.0, fail_closed=False),
             audit=AuditConfig(enabled=False),
@@ -141,9 +138,7 @@ class TestEndToEnd:
             await server.stop()
 
     @pytest.mark.asyncio
-    async def test_proxy_returns_502_on_upstream_failure(
-        self, free_port: int
-    ) -> None:
+    async def test_proxy_returns_502_on_upstream_failure(self, free_port: int) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=True, min_confidence=0.0),
             audit=AuditConfig(enabled=False),
@@ -204,9 +199,7 @@ class TestEndToEnd:
             await server.stop()
 
     @pytest.mark.asyncio
-    async def test_proxy_returns_502_on_upstream_failure_port(
-        self, free_port: int
-    ) -> None:
+    async def test_proxy_returns_502_on_upstream_failure_port(self, free_port: int) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=True, min_confidence=0.0),
             audit=AuditConfig(enabled=False),
@@ -287,11 +280,7 @@ class TestHTTPSConnect:
         client_writer.wait_closed = AsyncMock()
         client_writer.get_extra_info = MagicMock(return_value=("127.0.0.1", 12345))
 
-        client_reader.feed_data(
-            b"CONNECT example.com:443 HTTP/1.1\r\n"
-            b"Host: example.com:443\r\n"
-            b"\r\n"
-        )
+        client_reader.feed_data(b"CONNECT example.com:443 HTTP/1.1\r\nHost: example.com:443\r\n\r\n")
         client_reader.feed_eof()
 
         with patch(
@@ -302,13 +291,9 @@ class TestHTTPSConnect:
                 request_id="test-connect",
                 start_time=time.monotonic(),
             )
-            await server._handle_connect(
-                client_reader, client_writer, ctx, "example.com:443"
-            )
+            await server._handle_connect(client_reader, client_writer, ctx, "example.com:443")
 
-        client_writer.write.assert_called_once_with(
-            b"HTTP/1.1 200 Connection Established\r\n\r\n"
-        )
+        client_writer.write.assert_called_once_with(b"HTTP/1.1 200 Connection Established\r\n\r\n")
         assert ctx.target_host == "example.com"
         assert ctx.target_port == 443
 
@@ -334,24 +319,16 @@ class TestHTTPSConnect:
         client_writer.wait_closed = AsyncMock()
         client_writer.get_extra_info = MagicMock(return_value=("127.0.0.1", 12345))
 
-        client_reader.feed_data(
-            b"CONNECT 192.0.2.1:443 HTTP/1.1\r\n"
-            b"Host: 192.0.2.1:443\r\n"
-            b"\r\n"
-        )
+        client_reader.feed_data(b"CONNECT 192.0.2.1:443 HTTP/1.1\r\nHost: 192.0.2.1:443\r\n\r\n")
         client_reader.feed_eof()
 
         ctx = RequestContext(
             request_id="test-timeout",
             start_time=time.monotonic(),
         )
-        await server._handle_connect(
-            client_reader, client_writer, ctx, "192.0.2.1:443"
-        )
+        await server._handle_connect(client_reader, client_writer, ctx, "192.0.2.1:443")
 
-        client_writer.write.assert_called_once_with(
-            b"HTTP/1.1 504 Gateway Timeout\r\n\r\n"
-        )
+        client_writer.write.assert_called_once_with(b"HTTP/1.1 504 Gateway Timeout\r\n\r\n")
         assert ctx.error == "upstream_timeout"
 
 
@@ -440,9 +417,7 @@ class TestFailClosed:
 
 class TestScrubIntegration:
     @pytest.mark.asyncio
-    async def test_pii_in_request_body_scrubbed(
-        self, free_port: int, upstream_server: tuple[str, int]
-    ) -> None:
+    async def test_pii_in_request_body_scrubbed(self, free_port: int, upstream_server: tuple[str, int]) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=True, min_confidence=0.0),
             audit=AuditConfig(enabled=False),
@@ -470,10 +445,7 @@ class TestScrubIntegration:
         await server.start()
 
         try:
-            pii_body = (
-                b'{"user": "alice@example.com", "phone": "555-123-4567", '
-                b'"ssn": "123-45-6789", "note": "hello"}'
-            )
+            pii_body = b'{"user": "alice@example.com", "phone": "555-123-4567", "ssn": "123-45-6789", "note": "hello"}'
 
             request = (
                 f"POST http://{upstream_server[0]}:{upstream_server[1]}/api HTTP/1.1\r\n"
@@ -501,9 +473,7 @@ class TestScrubIntegration:
             await server.stop()
 
     @pytest.mark.asyncio
-    async def test_scrub_count_tracked(
-        self, free_port: int, upstream_server: tuple[str, int]
-    ) -> None:
+    async def test_scrub_count_tracked(self, free_port: int, upstream_server: tuple[str, int]) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=True, min_confidence=0.0),
             audit=AuditConfig(enabled=False),
@@ -689,9 +659,7 @@ class TestAuditWritten:
         assert "request_id" in first_event
 
     @pytest.mark.asyncio
-    async def test_audit_disabled_no_file_created(
-        self, free_port: int, tmp_path: Path
-    ) -> None:
+    async def test_audit_disabled_no_file_created(self, free_port: int, tmp_path: Path) -> None:
         config = Config(
             scrubber=ScrubberConfig(enabled=False),
             audit=AuditConfig(enabled=False, log_dir=str(tmp_path / "audit_disabled")),

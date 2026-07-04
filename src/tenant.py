@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 # Pydantic config models
 # ---------------------------------------------------------------------------
 
+
 class TenantRateLimit(BaseModel):
     """Rate-limit overrides for a tenant."""
+
     requests_per_second: float = Field(default=10.0, ge=0.0)
     burst_size: int = Field(default=20, ge=1)
     max_concurrent: int = Field(default=5, ge=1)
@@ -32,6 +34,7 @@ class TenantRateLimit(BaseModel):
 
 class TenantScrubber(BaseModel):
     """Scrubber configuration for a tenant."""
+
     enabled: bool = True
     pii_presets: list[str] = Field(default_factory=list)
     custom_patterns: dict[str, str] = Field(default_factory=dict)
@@ -43,6 +46,7 @@ class TenantScrubber(BaseModel):
 
 class TenantConfig(BaseModel):
     """Full configuration for a single tenant."""
+
     tenant_id: str
     name: str | None = None
     description: str | None = None
@@ -82,6 +86,7 @@ DEFAULT_TENANT = TenantConfig(
 # ---------------------------------------------------------------------------
 # TenantManager
 # ---------------------------------------------------------------------------
+
 
 class TenantManager:
     """
@@ -259,7 +264,4 @@ class TenantManager:
         return tenant_id in self._tenants
 
     def __repr__(self) -> str:
-        return (
-            f"<TenantManager dir={self._tenants_dir!s} "
-            f"tenants={len(self._tenants)} watching={self._running}>"
-        )
+        return f"<TenantManager dir={self._tenants_dir!s} tenants={len(self._tenants)} watching={self._running}>"

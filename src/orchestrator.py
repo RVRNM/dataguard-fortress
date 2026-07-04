@@ -330,7 +330,4 @@ class DataGuardOrchestrator:
         }
 
     def __repr__(self) -> str:
-        return (
-            f"<DataGuardOrchestrator running={self._running} "
-            f"tenants={len(self._tenant_manager)}>"
-        )
+        return f"<DataGuardOrchestrator running={self._running} tenants={len(self._tenant_manager)}>"
