@@ -93,3 +93,11 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-ra -q"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/main.py", "src/dashboard.py"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 60

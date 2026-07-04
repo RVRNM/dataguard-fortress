@@ -1,3 +1,8 @@
+import pytest
+
+from src.token_bucket import TokenBucket
+
+
 @pytest.mark.asyncio
 async def test_redis_bucket_state_fields(self, redis_bucket: TokenBucket) -> None:
     """State stored in Redis has expected fields."""
