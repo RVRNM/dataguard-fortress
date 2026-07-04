@@ -55,12 +55,13 @@ jobs:
           pytest tests/test_encryption.py --tb=long -q 2>&1 && echo "PASS: test_encryption.py" || echo "FAIL: test_encryption.py"
       - name: Run all tests (final verification, non-blocking)
         run: |
-          pytest tests/ --tb=long -q 2>&1 || true
+          pytest tests/ --tb=long -q --cov=src --cov-report=xml --cov-report=term-missing 2>&1 || true
       - name: Upload coverage to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: true
+          fail_ci_if_error: false
 
   security:
     runs-on: ubuntu-latest
