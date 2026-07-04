@@ -41,32 +41,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          echo "=== test_scrubber.py ==="
-          pytest tests/test_scrubber.py --tb=long -q 2>&1 && echo "PASS: test_scrubber.py" || echo "FAIL: test_scrubber.py"
-          echo "=== test_v03.py ==="
-          pytest tests/test_v03.py --tb=long -q 2>&1 && echo "PASS: test_v03.py" || echo "FAIL: test_v03.py"
-          echo "=== test_proxy.py ==="
-          pytest tests/test_proxy.py --tb=long -q 2>&1 && echo "PASS: test_proxy.py" || echo "FAIL: test_proxy.py"
-          echo "=== test_integration.py ==="
-          pytest tests/test_integration.py --tb=long -q 2>&1 && echo "PASS: test_integration.py" || echo "FAIL: test_integration.py"
-          echo "=== test_encryption.py ==="
-          pytest tests/test_encryption.py --tb=long -q 2>&1 && echo "PASS: test_encryption.py" || echo "FAIL: test_encryption.py"
-      - name: Run all tests (final verification, non-blocking)
-        run: |
-          pytest tests/ --tb=long -q --cov=src --cov-report=xml --cov-report=term-missing 2>&1 || true
+          pytest tests/ --tb=long -q --cov=src --cov-report=xml --cov-report=term-missing
       - name: Upload coverage to Codecov
-        continue-on-error: true
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
+          fail_ci_if_error: true
+          files: ./coverage.xml
 
   security:
     runs-on: ubuntu-latest
     needs: test
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -83,7 +70,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint, test, security]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
@@ -99,7 +86,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: build
-    continue-on-error: true
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       id-token: write
