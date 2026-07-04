@@ -72,7 +72,7 @@ class MockUpstreamProtocol(asyncio.Protocol):
 @pytest_asyncio.fixture
 async def upstream_server(free_port: int) -> AsyncGenerator[tuple[str, int], None]:
     """Start a mock upstream server for testing - Windows-compatible."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     server = await loop.create_server(MockUpstreamProtocol, "127.0.0.1", free_port)
     await server.start_serving()
     yield ("127.0.0.1", free_port)
