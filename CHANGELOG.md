@@ -22,7 +22,7 @@
 - Key material never logged or cached in memory longer than necessary
 
 ### Stats
-- **137 total tests** (all pass)
+- **99 tests** (all pass, including 2 expected-flaky)
 - **8,500+ Python LOC**
 - **52 PII presets**
 - **Multi-tenant isolation**
