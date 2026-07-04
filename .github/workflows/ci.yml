@@ -42,7 +42,7 @@ jobs:
           pip install -e ".[dev]"
       - name: Run tests with coverage
         run: |
-          pytest tests/ -v --tb=short \
+          pytest tests/ -v --tb=short -p no:langsmith \
             --cov=src --cov-report=xml --cov-report=term-missing \
             --cov-fail-under=95
       - name: Upload coverage to Codecov
