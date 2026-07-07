@@ -23,6 +23,7 @@
 - [The Problem](#the-problem)
 - [Quick Start (5 min)](#quick-start)
 - [Features](#features)
+- [Multi-Agent Installation](#-multi-agent-installation)
 - [What Gets Scrubbed](#what-gets-scrubbed)
 - [Multi-Tenant](#multi-tenant)
 - [Dashboard](#dashboard)
@@ -89,6 +90,80 @@ node skills/dataguard-fortress/install.js --agent claude
 | 🏢 **Multi-Tenant** | Per-customer YAML configs with hot-reload at runtime |
 | 🔐 **Payload Encryption** | AES-GCM 256-bit encryption for data at rest |
 | 📊 **Live Dashboard** | SSE-powered real-time metrics and audit feed |
+| 🤖 **Multi-Agent Support** | Works with Claude, Cursor, Cline, Continue, Aider, Hermes & more |
+
+---
+
+## 🤖 Multi-Agent Installation
+
+DataGuard Fortress integrates seamlessly with your favorite AI development tools:
+
+### Supported Agents
+
+| Agent | Status | Installation |
+|---|---|---|
+| 🤖 **Claude Code** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent claude` |
+| 📝 **Cursor** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent cursor` |
+| 🔧 **Cline (VSCode)** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent cline` |
+| ⚙️ **Continue** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent continue` |
+| 💻 **Aider (CLI)** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent aider` |
+| 🚀 **Hermes Agent** | ✅ Ready | `node skills/dataguard-fortress/install.js --agent hermes` |
+| 🏄 **Windsurf (Codeium)** | 🔜 Planned | Coming soon |
+| ✨ **Zed AI** | 🔜 Planned | Coming soon |
+| 🔗 **GitHub Copilot** | 🔜 Planned | Coming soon |
+
+### Install for All Detected Agents
+
+```bash
+node skills/dataguard-fortress/install.js --agent all
+```
+
+### Install for Specific Agent
+
+```bash
+git clone https://github.com/RVRNM/dataguard-fortress.git
+cd dataguard-fortress
+
+# Claude Code
+node skills/dataguard-fortress/install.js --agent claude
+
+# Cursor IDE
+node skills/dataguard-fortress/install.js --agent cursor
+
+# Cline (VSCode Extension)
+node skills/dataguard-fortress/install.js --agent cline
+
+# Continue IDE Plugin
+node skills/dataguard-fortress/install.js --agent continue
+
+# Aider (CLI)
+node skills/dataguard-fortress/install.js --agent aider
+
+# Hermes Agent
+node skills/dataguard-fortress/install.js --agent hermes
+```
+
+### Alternative Installation Methods
+
+```bash
+# Via pip (PyPI)
+pip install dataguard-fortress
+
+# Via uv (faster)
+uv pip install dataguard-fortress
+
+# From source
+git clone https://github.com/RVRNM/dataguard-fortress.git
+cd dataguard-fortress
+pip install -e .
+
+# Docker Hub
+docker pull rvrnm/dataguard-fortress:latest
+docker run -p 8080:8080 rvrnm/dataguard-fortress:latest
+
+# Docker Compose (includes Redis)
+docker-compose up -d
+```
 
 ---
 
@@ -342,6 +417,6 @@ limitations under the License.
 
 **Built with ❤️ for AI sovereignty and data privacy.**
 
-[⭐ Star us on GitHub](https://github.com/RVRNM/dataguard-fortress) · [🐛 Report a bug](../../issues) · [💡 Request a feature](../../issues) · [📖 Full Docs](docs/) · [🔐 Security](SECURITY.md) · [📝 Changelog](CHANGELOG.md)
+[⭐ Star us on GitHub](https://github.com/RVRNM/dataguard-fortress) · [🐛 Report a bug](../../issues) · [💡 Request a feature](../../issues) · [📖 Full Docs](docs/) · [🔐 Security](SECURITY.md)
 
 </div>
